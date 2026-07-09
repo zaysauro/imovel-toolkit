@@ -2,6 +2,7 @@ export const dashboardTools = [
   ["amortizacao", "table", "Planilha de Amortização", "SAC, PRICE, aportes manuais, FGTS e tabela completa."],
   ["aluguel", "compare", "Financiamento x Aluguel", "Compare aluguel, parcela, patrimônio e valorização."],
   ["entrada", "wallet", "Calculadora de Entrada", "Planeje composição da entrada e saldo a financiar."],
+  ["construcao", "building", "Evolução de Obra", "Compare juros de obra, INCC, venda esperada e ROI."],
   ["renda", "income", "Calculadora de Renda", "Estime renda mínima para aprovação de crédito."],
   ["configuracoes", "settings", "Configurações", "Parâmetros padrão para atendimento e relatórios."],
   ["glossario", "book", "Glossário", "Termos financeiros explicados para clientes."],
@@ -21,9 +22,123 @@ export function renderDashboardCards() {
 
 export function renderUtilityPages() {
   renderEntryPage();
+  renderConstructionPage();
   renderIncomePage();
   renderSettingsPage();
   renderGlossaryPage();
+}
+
+function renderConstructionPage() {
+  const page = document.querySelector('[data-page="construcao"]');
+  if (!page) return;
+  page.innerHTML = `
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="caption">Evolução de Obra</p>
+          <h2>Juros de obra x correção INCC</h2>
+        </div>
+        <span class="icon panel-icon" data-icon="building"></span>
+      </div>
+      <form class="form-grid" data-construction-form>
+        <label>Valor total do imóvel<input name="valorImovel" inputmode="decimal" placeholder="0,00"></label>
+        <label>Valor financiado<input name="valorFinanciado" inputmode="decimal" placeholder="0,00"></label>
+        <label>Entrada<input name="entrada" inputmode="decimal" placeholder="0,00"></label>
+        <label>Taxa anual dos juros de obra (%)<input name="taxaJurosObra" inputmode="decimal" placeholder="0,00"></label>
+        <label>INCC anual estimado (%)<input name="inccAnual" inputmode="decimal" placeholder="0,00"></label>
+        <label>Prazo da obra (meses)<input name="prazoObra" inputmode="numeric" placeholder="0"></label>
+        <label>Expectativa de venda após pronto<input name="expectativaVenda" inputmode="decimal" placeholder="Opcional"></label>
+        <div class="form-action">
+          <button class="button button-primary" type="submit">
+            <span class="icon" data-icon="calculator"></span>
+            Simular Evolução da Obra
+          </button>
+        </div>
+      </form>
+    </section>
+    <section class="summary-grid" data-construction-summary></section>
+    <section class="construction-grid">
+      <article class="panel">
+        <div class="panel-header">
+          <div>
+            <p class="caption">Comparação</p>
+            <h2>Menor custo estimado</h2>
+          </div>
+        </div>
+        <div data-construction-comparison></div>
+      </article>
+      <article class="panel">
+        <div class="panel-header">
+          <div>
+            <p class="caption">Expectativa de venda</p>
+            <h2>Lucro líquido e ROI</h2>
+          </div>
+        </div>
+        <div data-construction-sale></div>
+      </article>
+    </section>
+    <section class="construction-charts" data-construction-charts>
+      <article class="panel chart-panel">
+        <div class="panel-header">
+          <div>
+            <p class="caption">Cenário 1</p>
+            <h2>Evolução dos juros de obra</h2>
+          </div>
+        </div>
+        <canvas id="constructionInterestChart" height="130"></canvas>
+      </article>
+      <article class="panel chart-panel">
+        <div class="panel-header">
+          <div>
+            <p class="caption">Cenário 2</p>
+            <h2>Evolução do INCC</h2>
+          </div>
+        </div>
+        <canvas id="constructionInccChart" height="130"></canvas>
+      </article>
+      <article class="panel chart-panel">
+        <div class="panel-header">
+          <div>
+            <p class="caption">Comparativo</p>
+            <h2>Custo total por cenário</h2>
+          </div>
+        </div>
+        <canvas id="constructionComparisonChart" height="130"></canvas>
+      </article>
+    </section>
+    <section class="panel table-panel">
+      <div class="panel-header">
+        <div>
+          <p class="caption">Evolução mensal</p>
+          <h2>Tabela comparativa</h2>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="construction-table">
+          <thead>
+            <tr>
+              <th>Mês</th>
+              <th>Saldo liberado</th>
+              <th>Juros do mês</th>
+              <th>Juros acumulados</th>
+              <th>Saldo INCC</th>
+              <th>Correção acumulada</th>
+            </tr>
+          </thead>
+          <tbody data-construction-body></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="caption">Aviso</p>
+          <h2>Resultado estimativo</h2>
+        </div>
+      </div>
+      <p class="legal-note">Esta simulação possui caráter estimativo. Os juros de obra, a correção pelo INCC e demais custos podem variar conforme o contrato, cronograma físico-financeiro da obra, instituição financeira e condições vigentes.</p>
+    </section>
+  `;
 }
 
 function renderEntryPage() {

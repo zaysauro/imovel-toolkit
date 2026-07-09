@@ -1,10 +1,12 @@
 .hero-grid {
+  min-width: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
   gap: 24px;
 }
 
 .hero-panel {
+  min-width: 0;
   min-height: 300px;
   display: flex;
   align-items: flex-end;
@@ -28,7 +30,7 @@ body[data-theme="dark"] .hero-panel {
 
 .hero-panel h2 {
   max-width: 760px;
-  font-size: clamp(34px, 4vw, 54px);
+  font-size: 46px;
   font-weight: 700;
 }
 
@@ -41,9 +43,39 @@ body[data-theme="dark"] .hero-panel {
 }
 
 .dashboard-plus-grid {
+  min-width: 0;
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: 24px;
+}
+
+.construction-grid,
+.construction-charts {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.construction-charts {
+  grid-template-columns: repeat(3, minmax(260px, 1fr));
+}
+
+.construction-winner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 16px;
+  border: 1px solid rgba(201, 169, 106, 0.28);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--gold-soft) 70%, var(--surface));
+}
+
+.construction-winner strong {
+  color: var(--text);
+  font-size: 24px;
 }
 
 .shortcut-list,
@@ -116,6 +148,7 @@ body[data-theme="dark"] .hero-panel {
 }
 
 .settings-grid {
+  min-width: 0;
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.7fr);
   gap: 24px;
@@ -167,6 +200,7 @@ body[data-theme="dark"] .hero-panel {
 }
 
 .glossary-grid {
+  min-width: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(220px, 1fr));
   gap: 18px;
@@ -219,6 +253,7 @@ body[data-theme="dark"] .hero-panel {
 }
 
 .analytics-grid {
+  min-width: 0;
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.7fr);
   gap: 24px;
@@ -255,17 +290,32 @@ body[data-theme="dark"] .hero-panel {
   font-weight: 700;
 }
 
-@media (max-width: 1080px) {
-  .hero-grid,
-  .analytics-grid,
-  .dashboard-plus-grid,
-  .settings-grid,
-  .glossary-grid {
+@media (max-width: 1320px) {
+  .hero-grid {
     grid-template-columns: 1fr;
   }
 
   .hero-panel {
     align-items: flex-start;
     flex-direction: column;
+  }
+}
+
+@media (max-width: 1080px) {
+  .hero-grid,
+  .analytics-grid,
+  .dashboard-plus-grid,
+  .construction-grid,
+  .construction-charts,
+  .settings-grid,
+  .glossary-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+@media (max-width: 620px) {
+  .hero-panel h2 {
+    font-size: 34px;
   }
 }

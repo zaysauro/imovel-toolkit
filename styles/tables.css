@@ -3,7 +3,9 @@
 }
 
 .table-wrap {
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-width: 100%;
   margin: 0 -26px;
   border-top: 1px solid var(--border);
   border-radius: 0 0 var(--radius) var(--radius);
@@ -14,6 +16,10 @@ table {
   min-width: 1480px;
   border-collapse: collapse;
   font-size: 12px;
+}
+
+.construction-table {
+  min-width: 920px;
 }
 
 th,

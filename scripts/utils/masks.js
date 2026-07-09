@@ -5,11 +5,14 @@ const moneyFields = new Set([
   "entrada",
   "valorFinanciado",
   "aluguelInicial",
+  "expectativaVenda",
   "valor",
 ]);
 
 const percentFields = new Set([
   "taxaAnual",
+  "taxaJurosObra",
+  "inccAnual",
   "reajusteAnual",
   "valorizacaoAnual",
 ]);

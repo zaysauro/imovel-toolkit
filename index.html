@@ -6,58 +6,67 @@
     <title>Imovel Toolkit</title>
     <meta name="description" content="Plataforma web para simulações imobiliárias profissionais.">
     <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="styles/main.css">
-    <link rel="stylesheet" href="styles/dashboard.css">
-    <link rel="stylesheet" href="styles/cards.css">
-    <link rel="stylesheet" href="styles/modal.css">
-    <link rel="stylesheet" href="styles/tables.css">
-    <link rel="stylesheet" href="styles/buttons.css">
-    <link rel="stylesheet" href="styles/print.css">
+    <link rel="stylesheet" href="styles/main.css?v=construction-20260709c">
+    <link rel="stylesheet" href="styles/dashboard.css?v=construction-20260709c">
+    <link rel="stylesheet" href="styles/cards.css?v=construction-20260709c">
+    <link rel="stylesheet" href="styles/modal.css?v=construction-20260709c">
+    <link rel="stylesheet" href="styles/tables.css?v=construction-20260709c">
+    <link rel="stylesheet" href="styles/buttons.css?v=construction-20260709c">
+    <link rel="stylesheet" href="styles/print.css?v=construction-20260709c">
     <script src="assets/vendor/chart.umd.min.js" defer></script>
     <script src="assets/vendor/html2canvas.min.js" defer></script>
     <script src="assets/vendor/jspdf.umd.min.js" defer></script>
-    <script type="module" src="scripts/app.js"></script>
+    <script type="module" src="scripts/app.js?v=construction-20260709c"></script>
   </head>
   <body>
     <div class="app-shell">
-      <aside class="sidebar" aria-label="Navegação principal">
-        <a class="brand" href="#dashboard" data-route="dashboard" aria-label="Imóvel Toolkit">
-          <span class="brand-media">
-            <img src="assets/header.png" alt="O Bruno dos Imóveis">
-          </span>
-          <span class="brand-copy">
-            <strong>Imóvel Toolkit</strong>
-            <small>by Bruno dos Imóveis</small>
-          </span>
-        </a>
+      <aside class="sidebar drawer" aria-label="Navegação principal" data-drawer>
+        <div class="drawer-head">
+          <a class="brand" href="#dashboard" data-route="dashboard" aria-label="Imóvel Toolkit">
+            <span class="brand-media">
+              <img src="assets/header.png" alt="O Bruno dos Imóveis">
+            </span>
+            <span class="brand-copy">
+              <strong>Imóvel Toolkit</strong>
+              <small>by Bruno dos Imóveis</small>
+            </span>
+          </a>
+          <button class="icon-button drawer-toggle" type="button" data-drawer-toggle aria-label="Minimizar navegação" aria-expanded="true">
+            <span class="icon" data-icon="chevron-left"></span>
+          </button>
+        </div>
         <nav class="nav-list">
-          <a href="#dashboard" class="nav-link is-active" data-route="dashboard">
+          <a href="#dashboard" class="nav-link nav-item is-active" data-route="dashboard" data-tooltip="Dashboard" aria-label="Dashboard">
             <span class="icon" data-icon="dashboard"></span>
-            Dashboard
+            <span class="nav-label">Dashboard</span>
           </a>
-          <a href="#amortizacao" class="nav-link" data-route="amortizacao">
+          <a href="#amortizacao" class="nav-link nav-item" data-route="amortizacao" data-tooltip="Planilha de Amortização" aria-label="Planilha de Amortização">
             <span class="icon" data-icon="table"></span>
-            Planilha de Amortização
+            <span class="nav-label">Planilha de Amortização</span>
           </a>
-          <a href="#aluguel" class="nav-link" data-route="aluguel">
+          <a href="#aluguel" class="nav-link nav-item" data-route="aluguel" data-tooltip="Financiamento x Aluguel" aria-label="Financiamento x Aluguel">
             <span class="icon" data-icon="compare"></span>
-            Financiamento x Aluguel
+            <span class="nav-label">Financiamento x Aluguel</span>
           </a>
-          <a href="#entrada" class="nav-link" data-route="entrada">
+          <a href="#entrada" class="nav-link nav-item" data-route="entrada" data-tooltip="Calculadora de Entrada" aria-label="Calculadora de Entrada">
             <span class="icon" data-icon="wallet"></span>
-            Calculadora de Entrada
+            <span class="nav-label">Calculadora de Entrada</span>
           </a>
-          <a href="#renda" class="nav-link" data-route="renda">
+          <a href="#construcao" class="nav-link nav-item" data-route="construcao" data-tooltip="Evolução de Obra" aria-label="Evolução de Obra">
+            <span class="icon" data-icon="building"></span>
+            <span class="nav-label">Evolução de Obra</span>
+          </a>
+          <a href="#renda" class="nav-link nav-item" data-route="renda" data-tooltip="Calculadora de Renda" aria-label="Calculadora de Renda">
             <span class="icon" data-icon="income"></span>
-            Calculadora de Renda
+            <span class="nav-label">Calculadora de Renda</span>
           </a>
-          <a href="#configuracoes" class="nav-link" data-route="configuracoes">
+          <a href="#configuracoes" class="nav-link nav-item" data-route="configuracoes" data-tooltip="Configurações" aria-label="Configurações">
             <span class="icon" data-icon="settings"></span>
-            Configurações
+            <span class="nav-label">Configurações</span>
           </a>
-          <a href="#glossario" class="nav-link" data-route="glossario">
+          <a href="#glossario" class="nav-link nav-item" data-route="glossario" data-tooltip="Glossário" aria-label="Glossário">
             <span class="icon" data-icon="book"></span>
-            Glossário
+            <span class="nav-label">Glossário</span>
           </a>
         </nav>
         <div class="sidebar-card">
@@ -69,10 +78,11 @@
           <a href="https://github.com/zaysauro/imovel-toolkit" target="_blank" rel="noreferrer">GitHub</a>
         </footer>
       </aside>
+      <div class="drawer-overlay" data-drawer-overlay hidden></div>
 
-      <main class="workspace">
+      <main class="workspace main-content">
         <header class="topbar">
-          <button class="icon-button mobile-menu" type="button" data-sidebar-toggle aria-label="Abrir menu">
+          <button class="icon-button mobile-menu" type="button" data-mobile-drawer-toggle aria-label="Abrir navegação" aria-expanded="false">
             <span class="icon" data-icon="menu"></span>
           </button>
           <div>
@@ -275,6 +285,7 @@
         </section>
 
         <section class="page utility-page" id="entrada" data-page="entrada"></section>
+        <section class="page utility-page" id="construcao" data-page="construcao"></section>
         <section class="page utility-page" id="renda" data-page="renda"></section>
         <section class="page utility-page" id="configuracoes" data-page="configuracoes"></section>
         <section class="page utility-page" id="glossario" data-page="glossario"></section>

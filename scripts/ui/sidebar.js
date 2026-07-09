@@ -11,7 +11,6 @@ export function setupSidebar(onRoute) {
     links.forEach((link) => link.classList.toggle("is-active", link.dataset.route === route));
     title.textContent = pageTitle(route);
     subtitle.textContent = pageSubtitle(route);
-    document.body.classList.remove("sidebar-open");
     onRoute(route);
   }
 
@@ -31,10 +30,6 @@ export function setupSidebar(onRoute) {
     });
   });
 
-  document.querySelector("[data-sidebar-toggle]")?.addEventListener("click", () => {
-    document.body.classList.toggle("sidebar-open");
-  });
-
   activate(location.hash.replace("#", "") || "dashboard");
 }
 
@@ -44,6 +39,7 @@ function pageTitle(route) {
     amortizacao: "Planilha de Amortização",
     aluguel: "Financiamento x Aluguel",
     entrada: "Calculadora de Entrada",
+    construcao: "Evolução de Obra",
     renda: "Calculadora de Renda",
     configuracoes: "Configurações",
     glossario: "Glossário",
@@ -57,6 +53,7 @@ function pageSubtitle(route) {
     amortizacao: "Simule SAC, PRICE, FGTS e aportes com precisão",
     aluguel: "Compare compra, aluguel, patrimônio e valorização",
     entrada: "Planejamento de entrada e composição de recursos",
+    construcao: "Compare juros de obra, INCC, venda esperada e ROI",
     renda: "Estimativa de renda e capacidade de compra",
     configuracoes: "Preferências visuais e dados profissionais",
     glossario: "Termos imobiliários explicados para clientes",

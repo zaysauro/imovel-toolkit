@@ -1,4 +1,11 @@
 import { calculateAmortization } from "../finance/amortizacao.js";
+import {
+  calculateConstructionEvolution,
+  calculateInccScenario,
+  calculateSaleExpectation,
+  calculateWorkInterestScenario,
+  compareConstructionScenarios,
+} from "../finance/construction.js";
 import { calculateEntryPlan } from "../finance/entrada.js";
 import { createFgtsMap } from "../finance/fgts.js";
 import { annualToMonthlyRate } from "../finance/helpers.js";
@@ -22,6 +29,10 @@ export function runFinanceTests() {
     testSummarySavingsAndEliminatedInstallments,
     testEntryCalculator,
     testIncomeCalculator,
+    testConstructionWorkInterest,
+    testConstructionInccCorrection,
+    testConstructionScenarioComparison,
+    testConstructionSaleRoi,
     testSettingsStorage,
     testSimulationStorage,
     testSharedSimulationUrl,
@@ -35,6 +46,71 @@ export function runFinanceTests() {
       return { name: test.name, status: "failed", message: error.message };
     }
   });
+}
+
+function testConstructionWorkInterest() {
+  const result = calculateWorkInterestScenario({
+    financedValue: 120000,
+    monthlyRate: 0.01,
+    months: 12,
+  });
+
+  assertEqual(result.rows.length, 12, "juros de obra deve gerar 12 meses");
+  assertClose(result.firstMonthInterest, 100, "juros de obra primeiro mês");
+  assertClose(result.lastMonthInterest, 1200, "juros de obra último mês");
+  assertClose(result.totalInterest, 7800, "juros de obra total");
+}
+
+function testConstructionInccCorrection() {
+  const result = calculateInccScenario({
+    financedValue: 120000,
+    monthlyRate: 0.01,
+    months: 12,
+  });
+
+  assertEqual(result.rows.length, 12, "INCC deve gerar 12 meses");
+  assertClose(result.updatedBalance, 135219.00320418837, "saldo corrigido por INCC");
+  assertClose(result.correctionAmount, 15219.003204188368, "correção acumulada INCC");
+}
+
+function testConstructionScenarioComparison() {
+  const comparison = compareConstructionScenarios({
+    propertyValue: 150000,
+    financedValue: 120000,
+    downPayment: 30000,
+    workInterestCost: 7800,
+    inccCost: 15219.003204188368,
+  });
+
+  assertEqual(comparison.bestScenario, "jurosObra", "menor custo deve ser juros de obra");
+  assertClose(comparison.difference, 7419.003204188368, "diferença financeira construção");
+  assertClose(comparison.economy, 7419.003204188368, "economia construção");
+}
+
+function testConstructionSaleRoi() {
+  const sale = calculateSaleExpectation({
+    propertyValue: 150000,
+    downPayment: 30000,
+    expectedSaleValue: 180000,
+    workInterestCost: 7800,
+    inccCost: 15219.003204188368,
+  });
+  const full = calculateConstructionEvolution({
+    propertyValue: 150000,
+    financedValue: 120000,
+    downPayment: 30000,
+    workInterestAnnualRate: MONTHLY_ONE_PERCENT_ANNUAL,
+    inccAnnualRate: MONTHLY_ONE_PERCENT_ANNUAL,
+    months: 12,
+    expectedSaleValue: 180000,
+  });
+
+  assertClose(sale.workInterest.capitalInvested, 37800, "capital investido juros de obra");
+  assertClose(sale.workInterest.netProfit, 22200, "lucro líquido juros de obra");
+  assertClose(sale.workInterest.roi, 0.5873015873015873, "ROI juros de obra");
+  assertEqual(sale.bestScenario, "jurosObra", "melhor ROI deve ser juros de obra");
+  assertClose(full.rates.workInterestMonthlyRate, 0.01, "taxa mensal obra equivalente");
+  assertClose(full.rates.inccMonthlyRate, 0.01, "taxa mensal INCC equivalente");
 }
 
 function testAnnualToMonthlyRate() {
