@@ -1,0 +1,26 @@
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  .sidebar,
+  .topbar-actions,
+  .mobile-menu,
+  .modal-backdrop {
+    display: none !important;
+  }
+
+  .app-shell {
+    display: block;
+  }
+
+  .workspace {
+    padding: 0;
+  }
+
+  .panel,
+  .metric-card {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+}

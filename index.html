@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Imovel Toolkit</title>
+    <meta name="description" content="Plataforma web para simulações imobiliárias profissionais.">
+    <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/dashboard.css">
+    <link rel="stylesheet" href="styles/cards.css">
+    <link rel="stylesheet" href="styles/modal.css">
+    <link rel="stylesheet" href="styles/tables.css">
+    <link rel="stylesheet" href="styles/buttons.css">
+    <link rel="stylesheet" href="styles/print.css">
+    <script src="assets/vendor/chart.umd.min.js" defer></script>
+    <script src="assets/vendor/html2canvas.min.js" defer></script>
+    <script src="assets/vendor/jspdf.umd.min.js" defer></script>
+    <script type="module" src="scripts/app.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Navegação principal">
+        <a class="brand" href="#dashboard" data-route="dashboard" aria-label="Imóvel Toolkit">
+          <span class="brand-media">
+            <img src="assets/header.png" alt="O Bruno dos Imóveis">
+          </span>
+          <span class="brand-copy">
+            <strong>Imóvel Toolkit</strong>
+            <small>by Bruno dos Imóveis</small>
+          </span>
+        </a>
+        <nav class="nav-list">
+          <a href="#dashboard" class="nav-link is-active" data-route="dashboard">
+            <span class="icon" data-icon="dashboard"></span>
+            Dashboard
+          </a>
+          <a href="#amortizacao" class="nav-link" data-route="amortizacao">
+            <span class="icon" data-icon="table"></span>
+            Planilha de Amortização
+          </a>
+          <a href="#aluguel" class="nav-link" data-route="aluguel">
+            <span class="icon" data-icon="compare"></span>
+            Financiamento x Aluguel
+          </a>
+          <a href="#entrada" class="nav-link" data-route="entrada">
+            <span class="icon" data-icon="wallet"></span>
+            Calculadora de Entrada
+          </a>
+          <a href="#renda" class="nav-link" data-route="renda">
+            <span class="icon" data-icon="income"></span>
+            Calculadora de Renda
+          </a>
+          <a href="#configuracoes" class="nav-link" data-route="configuracoes">
+            <span class="icon" data-icon="settings"></span>
+            Configurações
+          </a>
+          <a href="#glossario" class="nav-link" data-route="glossario">
+            <span class="icon" data-icon="book"></span>
+            Glossário
+          </a>
+        </nav>
+        <div class="sidebar-card">
+          <strong>Uso em reunião</strong>
+          <span>Simulações locais, rápidas e prontas para PDF.</span>
+        </div>
+        <footer class="sidebar-footer">
+          <span>Versão 0.2</span>
+          <a href="https://github.com/zaysauro/imovel-toolkit" target="_blank" rel="noreferrer">GitHub</a>
+        </footer>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <button class="icon-button mobile-menu" type="button" data-sidebar-toggle aria-label="Abrir menu">
+            <span class="icon" data-icon="menu"></span>
+          </button>
+          <div>
+            <p class="caption" data-page-subtitle>Plataforma profissional para simulações imobiliárias</p>
+            <h1 data-page-title>Dashboard</h1>
+          </div>
+          <div class="topbar-actions">
+            <div class="broker-pill">
+              <span class="icon" data-icon="user"></span>
+              <span>Bruno dos Imóveis</span>
+            </div>
+            <button class="icon-button" type="button" data-theme-toggle aria-label="Alternar modo escuro">
+              <span class="icon" data-icon="moon"></span>
+            </button>
+            <button class="button button-secondary" type="button" data-action="open-aportes">
+              <span class="icon" data-icon="plus"></span>
+              Aportes
+            </button>
+            <button class="button button-secondary" type="button" data-action="open-fgts">
+              <span class="icon" data-icon="shield"></span>
+              FGTS
+            </button>
+            <button class="button button-secondary" type="button" data-action="save-simulation">
+              <span class="icon" data-icon="save"></span>
+              Salvar
+            </button>
+            <button class="button button-secondary" type="button" data-action="share-simulation">
+              <span class="icon" data-icon="link"></span>
+              Compartilhar
+            </button>
+            <button class="button button-secondary" type="button" data-action="send-whatsapp">
+              <span class="icon" data-icon="message"></span>
+              WhatsApp
+            </button>
+            <button class="button button-primary" type="button" data-action="export-pdf">
+              <span class="icon" data-icon="download"></span>
+              Gerar PDF
+            </button>
+          </div>
+        </header>
+
+        <section class="page is-active" id="dashboard" data-page="dashboard">
+          <div class="hero-grid">
+            <article class="hero-panel">
+              <div>
+                <p class="caption">Imovel Toolkit</p>
+                <h2>Simulações imobiliárias completas, no navegador.</h2>
+                <p>Calcule SAC, PRICE, FGTS, aportes e comparativos de compra com uma interface pronta para atendimento consultivo.</p>
+              </div>
+              <button class="button button-primary" type="button" data-route-button="amortizacao">Abrir planilha</button>
+            </article>
+            <article class="snapshot-card">
+              <span class="snapshot-label">Simulação ativa</span>
+              <strong data-summary="totalPago">R$ 0,00</strong>
+              <span>Total estimado pago</span>
+            </article>
+          </div>
+          <div class="tool-grid" data-dashboard-cards></div>
+          <section class="dashboard-plus-grid">
+            <article class="panel quick-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="caption">Atalhos rápidos</p>
+                  <h2>Fluxos favoritos</h2>
+                </div>
+                <span class="icon panel-icon" data-icon="sparkles"></span>
+              </div>
+              <div class="shortcut-list">
+                <button class="shortcut-item" type="button" data-route-button="amortizacao">
+                  <span class="icon" data-icon="calculator"></span>
+                  Nova simulação SAC/PRICE
+                </button>
+                <button class="shortcut-item" type="button" data-action="open-fgts">
+                  <span class="icon" data-icon="shield"></span>
+                  Planejar uso de FGTS
+                </button>
+                <button class="shortcut-item" type="button" data-route-button="aluguel">
+                  <span class="icon" data-icon="compare"></span>
+                  Comparar compra x aluguel
+                </button>
+              </div>
+            </article>
+            <article class="panel simulations-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="caption">Últimas simulações</p>
+                  <h2>Histórico visual</h2>
+                </div>
+                <span class="icon panel-icon" data-icon="clock"></span>
+              </div>
+              <input data-history-search placeholder="Pesquisar por cliente">
+              <div class="simulation-list">
+                <div><strong>Nenhuma simulação salva</strong><span>Crie uma nova planilha para iniciar o atendimento.</span></div>
+              </div>
+            </article>
+          </section>
+        </section>
+
+        <section class="page" id="amortizacao" data-page="amortizacao">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="caption">Planilha de amortização</p>
+                <h2>Dados da simulação</h2>
+              </div>
+              <div class="status-chip" data-fgts-status>FGTS inativo</div>
+            </div>
+            <form class="form-grid" data-amortization-form>
+              <label>Nome do cliente<input name="cliente" placeholder="Digite o nome do cliente" autocomplete="name"></label>
+              <label>Valor do imóvel<input name="valorImovel" inputmode="decimal" placeholder="0,00"></label>
+              <label>Entrada<input name="entrada" inputmode="decimal" placeholder="0,00"></label>
+              <label>Valor financiado<input name="valorFinanciado" inputmode="decimal" placeholder="0,00"></label>
+              <label>Taxa anual (%)<input name="taxaAnual" inputmode="decimal" placeholder="0,00"></label>
+              <label>Taxa mensal (%)<input name="taxaMensal" readonly></label>
+              <label>Prazo em meses<input name="prazo" inputmode="numeric" placeholder="0"></label>
+              <label>Sistema<select name="sistema"><option value="SAC">SAC</option><option value="PRICE">PRICE</option></select></label>
+              <label>Objetivo da amortização<select name="objetivoAmortizacao"><option value="prazo">Reduzir prazo</option><option value="parcela">Reduzir parcela</option></select></label>
+            </form>
+          </section>
+
+          <section class="summary-grid" data-summary-grid></section>
+
+          <section class="analytics-grid">
+            <article class="panel chart-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="caption">Evolução do saldo</p>
+                  <h2>Original x amortizado</h2>
+                </div>
+              </div>
+              <canvas id="balanceChart" height="130"></canvas>
+            </article>
+            <article class="panel stats-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="caption">Estatísticas</p>
+                  <h2>Impacto da amortização</h2>
+                </div>
+              </div>
+              <div class="stats-list" data-stats-list></div>
+            </article>
+          </section>
+
+          <section class="panel table-panel">
+            <div class="panel-header">
+              <div>
+                <p class="caption">Tabela completa</p>
+                <h2>Parcelas mês a mês</h2>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nº</th>
+                    <th>Restantes</th>
+                    <th>Saldo inicial</th>
+                    <th>Juros</th>
+                    <th>Saldo c/ juros</th>
+                    <th>Amortização</th>
+                    <th>Parcela</th>
+                    <th>Saldo final</th>
+                    <th>Aporte manual</th>
+                    <th>FGTS</th>
+                    <th>Saldo corrigido</th>
+                    <th>Nova parcela</th>
+                    <th>Novo saldo</th>
+                  </tr>
+                </thead>
+                <tbody data-amortization-body></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section class="page" id="aluguel" data-page="aluguel">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="caption">Financiamento x Aluguel</p>
+                <h2>Comparativo financeiro</h2>
+              </div>
+            </div>
+            <form class="form-grid" data-rent-form>
+              <label>Valor imóvel<input name="valorImovel" inputmode="decimal" placeholder="0,00"></label>
+              <label>Entrada<input name="entrada" inputmode="decimal" placeholder="0,00"></label>
+              <label>Valor financiado<input name="valorFinanciado" inputmode="decimal" placeholder="0,00"></label>
+              <label>Prazo<input name="prazo" inputmode="numeric" placeholder="0"></label>
+              <label>Taxa anual (%)<input name="taxaAnual" inputmode="decimal" placeholder="0,00"></label>
+              <label>Aluguel inicial<input name="aluguelInicial" inputmode="decimal" placeholder="0,00"></label>
+              <label>Reajuste anual aluguel (%)<input name="reajusteAnual" inputmode="decimal" placeholder="0,00"></label>
+              <label>Valorização anual imóvel (%)<input name="valorizacaoAnual" inputmode="decimal" placeholder="0,00"></label>
+              <label>Horizonte da análise (meses)<input name="horizonte" inputmode="numeric" placeholder="0"></label>
+            </form>
+          </section>
+          <section class="summary-grid" data-rent-summary></section>
+          <section class="panel chart-panel">
+            <canvas id="rentChart" height="130"></canvas>
+          </section>
+        </section>
+
+        <section class="page utility-page" id="entrada" data-page="entrada"></section>
+        <section class="page utility-page" id="renda" data-page="renda"></section>
+        <section class="page utility-page" id="configuracoes" data-page="configuracoes"></section>
+        <section class="page utility-page" id="glossario" data-page="glossario"></section>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" data-modal="aportes" hidden>
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="aportes-title">
+        <header class="modal-header">
+          <h2 id="aportes-title">Aportes manuais</h2>
+          <button class="icon-button" type="button" data-close-modal aria-label="Fechar"><span class="icon" data-icon="x"></span></button>
+        </header>
+        <form class="modal-body" data-schedule-form="manual">
+          <label>Valor do aporte<input name="valor" inputmode="decimal" placeholder="0,00"></label>
+          <label>Periodicidade<select name="periodicidade"><option value="1">Mensal</option><option value="6">Semestral</option><option value="12">Anual</option><option value="24">A cada 24 meses</option></select></label>
+          <label>Primeiro aporte<input name="primeiroMes" inputmode="numeric" placeholder="0"></label>
+          <label>Limitar até mês<input name="limiteMes" inputmode="numeric" placeholder="0"></label>
+          <footer class="modal-actions">
+            <button class="button button-secondary" type="button" data-clear-schedule="manual">Limpar</button>
+            <button class="button button-primary" type="submit">Aplicar</button>
+          </footer>
+        </form>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" data-modal="fgts" hidden>
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="fgts-title">
+        <header class="modal-header">
+          <h2 id="fgts-title">Uso de FGTS</h2>
+          <button class="icon-button" type="button" data-close-modal aria-label="Fechar"><span class="icon" data-icon="x"></span></button>
+        </header>
+        <form class="modal-body" data-schedule-form="fgts">
+          <label>Valor<input name="valor" inputmode="decimal" placeholder="0,00"></label>
+          <label>Periodicidade<select name="periodicidade"><option value="24" selected>A cada 24 meses</option><option value="12">Anual</option><option value="6">Semestral</option><option value="1">Mensal</option></select></label>
+          <label>Primeiro mês<input name="primeiroMes" inputmode="numeric" placeholder="24"></label>
+          <label>Limitar até mês<input name="limiteMes" inputmode="numeric" placeholder="0"></label>
+          <footer class="modal-actions">
+            <button class="button button-secondary" type="button" data-clear-schedule="fgts">Limpar</button>
+            <button class="button button-primary" type="submit">Aplicar</button>
+          </footer>
+        </form>
+      </section>
+    </div>
+  </body>
+</html>

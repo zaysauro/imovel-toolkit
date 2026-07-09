@@ -1,0 +1,11 @@
+<svg width="184" height="48" viewBox="0 0 184 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title">
+  <title id="title">Imovel Toolkit</title>
+  <rect x="1" y="1" width="46" height="46" rx="10" fill="#0F766E"/>
+  <path d="M13 25.5L24 15L35 25.5" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M17 24V34H31V24" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M58 16H64.5V34H58V16Z" fill="#111827"/>
+  <path d="M69.5 16H75.7L83 27.4L90.2 16H96.4V34H90.2V25.8L84.9 34H81L75.7 25.8V34H69.5V16Z" fill="#111827"/>
+  <path d="M101.2 25C101.2 19.5 105.6 15.5 111.4 15.5C117.2 15.5 121.6 19.5 121.6 25C121.6 30.5 117.2 34.5 111.4 34.5C105.6 34.5 101.2 30.5 101.2 25ZM115 25C115 22.5 113.6 21.1 111.4 21.1C109.2 21.1 107.8 22.5 107.8 25C107.8 27.5 109.2 28.9 111.4 28.9C113.6 28.9 115 27.5 115 25Z" fill="#111827"/>
+  <path d="M126.3 16H133L137.1 27.2L141.2 16H147.9L140.7 34H133.5L126.3 16Z" fill="#111827"/>
+  <path d="M152.6 16H168V21.1H159.1V22.8H167.1V27.6H159.1V28.9H168.4V34H152.6V16Z" fill="#111827"/>
+</svg>

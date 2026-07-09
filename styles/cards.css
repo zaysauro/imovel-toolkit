@@ -1,0 +1,141 @@
+.summary-grid,
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(190px, 1fr));
+  gap: 18px;
+}
+
+.metric-card,
+.tool-card,
+.snapshot-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease;
+}
+
+.metric-card::before,
+.tool-card::before,
+.snapshot-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201, 169, 106, 0.42), transparent);
+  opacity: 0;
+  transition: opacity 250ms ease;
+}
+
+.metric-card:hover,
+.tool-card:hover,
+.snapshot-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-hover);
+  border-color: color-mix(in srgb, var(--border) 68%, var(--primary));
+}
+
+.metric-card:hover::before,
+.tool-card:hover::before,
+.snapshot-card:hover::before {
+  opacity: 1;
+}
+
+.metric-card {
+  min-height: 132px;
+  display: grid;
+  align-content: space-between;
+  gap: 18px;
+  padding: 22px;
+}
+
+.metric-card span,
+.snapshot-card span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.metric-card strong,
+.snapshot-card strong {
+  color: var(--text);
+  font-size: clamp(22px, 2vw, 30px);
+  font-weight: 700;
+  line-height: 1.08;
+}
+
+.metric-card.is-highlight {
+  border-color: rgba(201, 169, 106, 0.36);
+  background:
+    linear-gradient(180deg, rgba(201, 169, 106, 0.1), transparent 54%),
+    var(--surface);
+}
+
+.tool-card {
+  min-height: 178px;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  padding: 24px;
+  text-align: left;
+  color: var(--text);
+}
+
+.tool-card .icon-box {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-hover);
+  background: var(--gold-soft);
+  border-radius: 16px;
+  border: 1px solid rgba(201, 169, 106, 0.18);
+}
+
+body[data-theme="dark"] .tool-card .icon-box {
+  color: #e1c78b;
+  background: rgba(201, 169, 106, 0.12);
+}
+
+.tool-card h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.tool-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.snapshot-card {
+  display: grid;
+  align-content: center;
+  gap: 10px;
+  padding: 26px;
+}
+
+.snapshot-label {
+  color: var(--primary-hover) !important;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1180px) {
+  .summary-grid,
+  .tool-grid {
+    grid-template-columns: repeat(2, minmax(190px, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .summary-grid,
+  .tool-grid {
+    grid-template-columns: 1fr;
+  }
+}
