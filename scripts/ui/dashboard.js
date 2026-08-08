@@ -3,6 +3,8 @@ export const dashboardTools = [
   ["aluguel", "compare", "Financiamento x Aluguel", "Compare aluguel, parcela, patrimônio e valorização."],
   ["entrada", "wallet", "Calculadora de Entrada", "Planeje composição da entrada e saldo a financiar."],
   ["construcao", "building", "Evolução de Obra", "Compare juros de obra, INCC, venda esperada e ROI."],
+  ["hauer4you", "building", "Hauer4you", "Simulador Pride associativo com unidades, vagas e validações do empreendimento."],
+  ["valorreal", "building", "ValorReal", "Simulador de parcelamento imobiliário com entrada, pós-chave e margem."],
   ["renda", "income", "Calculadora de Renda", "Estime renda mínima para aprovação de crédito."],
   ["configuracoes", "settings", "Configurações", "Parâmetros padrão para atendimento e relatórios."],
   ["glossario", "book", "Glossário", "Termos financeiros explicados para clientes."],

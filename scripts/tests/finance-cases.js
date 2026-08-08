@@ -1,4 +1,5 @@
 import { calculateAmortization } from "../finance/amortizacao.js";
+import { createContributionMap } from "../finance/aportes.js";
 import {
   calculateConstructionEvolution,
   calculateInccScenario,
@@ -9,11 +10,13 @@ import {
 import { calculateEntryPlan } from "../finance/entrada.js";
 import { createFgtsMap } from "../finance/fgts.js";
 import { annualToMonthlyRate } from "../finance/helpers.js";
+import { parseNumber } from "../finance/formatter.js";
 import { calculatePrice } from "../finance/price.js";
 import { calculateIncomeCapacity } from "../finance/renda.js";
 import { calculateSac } from "../finance/sac.js";
 import { buildShareUrl, parseSharedSimulation } from "../utils/share.js";
 import { createMemoryStorage, listSimulations, loadSettings, saveSettings, saveSimulation } from "../utils/storage.js";
+import { scheduleStatus } from "../ui/schedule-status.js";
 
 const MONTHLY_ONE_PERCENT_ANNUAL = 12.682503013196972;
 
@@ -33,6 +36,15 @@ export function runFinanceTests() {
     testConstructionInccCorrection,
     testConstructionScenarioComparison,
     testConstructionSaleRoi,
+    testParseMoneyForScheduleModal,
+    testManualContributionAppearsAtMonth12,
+    testManualContributionReducesCorrectedBalance,
+    testManualContributionIncreasesInterestSavings,
+    testManualContributionReducesTerm,
+    testManualContributionReducesInstallment,
+    testFgtsEvery24MonthsInAmortization,
+    testScheduleActiveIndicators,
+    testClearSchedulesRecalculates,
     testSettingsStorage,
     testSimulationStorage,
     testSharedSimulationUrl,
@@ -46,6 +58,118 @@ export function runFinanceTests() {
       return { name: test.name, status: "failed", message: error.message };
     }
   });
+}
+
+function testParseMoneyForScheduleModal() {
+  assertClose(parseNumber("R$ 10.000,00"), 10000, "valor monetário do modal");
+  assertEqual(Number.parseInt("24", 10), 24, "periodicidade inteira");
+  assertEqual(Number.parseInt("72", 10), 72, "limite inteiro");
+}
+
+function testManualContributionAppearsAtMonth12() {
+  const result = amortizationWithSchedules({
+    manual: createContributionMap({ value: 10000, periodicity: 1, firstMonth: 12, limitMonth: 12 }),
+    fgts: new Map(),
+  });
+
+  assertClose(result.rows[11].manualContribution, 10000, "aporte manual mês 12");
+}
+
+function testManualContributionReducesCorrectedBalance() {
+  const withContribution = amortizationWithSchedules({
+    manual: createContributionMap({ value: 10000, periodicity: 1, firstMonth: 12, limitMonth: 12 }),
+    fgts: new Map(),
+  });
+  const withoutContribution = amortizationWithSchedules({ manual: new Map(), fgts: new Map() });
+
+  assertClose(
+    withoutContribution.rows[11].correctedBalance - withContribution.rows[11].correctedBalance,
+    10000,
+    "saldo corrigido reduz após aporte",
+  );
+}
+
+function testManualContributionIncreasesInterestSavings() {
+  const withContribution = amortizationWithSchedules({
+    manual: createContributionMap({ value: 10000, periodicity: 1, firstMonth: 12, limitMonth: 12 }),
+    fgts: new Map(),
+  });
+  const withoutContribution = amortizationWithSchedules({ manual: new Map(), fgts: new Map() });
+
+  assertClose(withoutContribution.stats.economiaJuros, 0, "sem aporte não há economia");
+  if (withContribution.stats.economiaJuros <= withoutContribution.stats.economiaJuros) {
+    throw new Error("economia em juros deve aumentar após aporte");
+  }
+}
+
+function testManualContributionReducesTerm() {
+  const withContribution = amortizationWithSchedules({
+    objetivoAmortizacao: "prazo",
+    manual: createContributionMap({ value: 10000, periodicity: 1, firstMonth: 12, limitMonth: 12 }),
+    fgts: new Map(),
+  });
+  const withoutContribution = amortizationWithSchedules({ objetivoAmortizacao: "prazo", manual: new Map(), fgts: new Map() });
+
+  if (withContribution.stats.novoPrazo >= withoutContribution.stats.novoPrazo) {
+    throw new Error("prazo restante deve diminuir quando objetivo é reduzir prazo");
+  }
+}
+
+function testManualContributionReducesInstallment() {
+  const withContribution = amortizationWithSchedules({
+    objetivoAmortizacao: "parcela",
+    manual: createContributionMap({ value: 10000, periodicity: 1, firstMonth: 12, limitMonth: 12 }),
+    fgts: new Map(),
+  });
+  const withoutContribution = amortizationWithSchedules({ objetivoAmortizacao: "parcela", manual: new Map(), fgts: new Map() });
+
+  if (withContribution.rows[11].correctedPayment >= withoutContribution.rows[11].correctedPayment) {
+    throw new Error("parcela corrigida deve diminuir quando objetivo é reduzir parcela");
+  }
+}
+
+function testFgtsEvery24MonthsInAmortization() {
+  const fgts = createFgtsMap({ value: 15000, periodicity: 24, firstMonth: 24, limitMonth: 72 });
+  const result = amortizationWithSchedules({ prazo: 96, manual: new Map(), fgts });
+
+  assertClose(result.rows[23].fgtsContribution, 15000, "FGTS mês 24 na tabela");
+  assertClose(result.rows[47].fgtsContribution, 15000, "FGTS mês 48 na tabela");
+  assertClose(result.rows[71].fgtsContribution, 15000, "FGTS mês 72 na tabela");
+}
+
+function testScheduleActiveIndicators() {
+  assertEqual(scheduleStatus("FGTS", new Map([[24, 15000]])).text, "FGTS ativo: 1 lançamentos", "indicador FGTS ativo");
+  assertEqual(scheduleStatus("Aportes", new Map([[12, 10000]])).text, "Aportes ativos: 1 lançamentos", "indicador aportes ativo");
+  assertEqual(scheduleStatus("FGTS", new Map()).text, "FGTS inativo", "indicador FGTS inativo");
+  assertEqual(scheduleStatus("Aportes", new Map()).text, "Aportes inativos", "indicador aportes inativos");
+}
+
+function testClearSchedulesRecalculates() {
+  const withSchedules = amortizationWithSchedules({
+    manual: createContributionMap({ value: 10000, periodicity: 1, firstMonth: 12, limitMonth: 12 }),
+    fgts: createFgtsMap({ value: 15000, periodicity: 24, firstMonth: 24, limitMonth: 72 }),
+  });
+  const cleared = amortizationWithSchedules({ manual: new Map(), fgts: new Map() });
+
+  assertClose(cleared.stats.totalAmortizado, 0, "limpar remove amortizações extras");
+  if (withSchedules.stats.totalAmortizado <= cleared.stats.totalAmortizado) {
+    throw new Error("simulação com agendas deve ter amortização extra");
+  }
+}
+
+function amortizationWithSchedules({
+  valorFinanciado = 120000,
+  taxaAnual = MONTHLY_ONE_PERCENT_ANNUAL,
+  prazo = 60,
+  sistema = "SAC",
+  objetivoAmortizacao = "prazo",
+  manual = new Map(),
+  fgts = new Map(),
+} = {}) {
+  return calculateAmortization(
+    { valorFinanciado, taxaAnual, prazo, sistema, objetivoAmortizacao },
+    { manual, fgts },
+  );
 }
 
 function testConstructionWorkInterest() {

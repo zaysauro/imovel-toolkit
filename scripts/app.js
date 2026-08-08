@@ -12,6 +12,7 @@ import { exportConstructionPdf, setupConstructionTool } from "./ui/construction.
 import { setupDrawer } from "./ui/drawer.js";
 import { setupModals } from "./ui/modals.js";
 import { exportSimulationPdf } from "./ui/pdf.js";
+import { scheduleStatus } from "./ui/schedule-status.js";
 import { setupSidebar } from "./ui/sidebar.js?v=construction-20260709c";
 import { setupBrazilianMasks } from "./utils/masks.js?v=construction-20260709c";
 import {
@@ -63,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupSettings();
   setupGlossary();
   setupModals({
-    onApply: applySchedule,
+    onApply: applyAmortizationConfig,
     onClear: clearSchedule,
   });
   document.querySelector("[data-action='export-pdf']")?.addEventListener("click", () => {
@@ -130,7 +131,7 @@ function renderAll() {
   renderStats();
   renderTable();
   renderBalanceChart(state.originalRows, state.rows);
-  updateFgtsStatus();
+  updateScheduleStatus();
   renderRent();
   renderEntry();
   renderIncome();
@@ -214,22 +215,88 @@ function renderTable() {
   });
 }
 
-function applySchedule(kind, config) {
-  const map = kind === "fgts" ? createFgtsMap(config) : createContributionMap(config);
-  state.schedules[kind] = map;
-  renderAll();
+function applyAmortizationConfig(type, config) {
+  const normalized = normalizeScheduleConfig(config, state.input?.prazo || readAmortizationInput().prazo);
+  if (!normalized.valid) {
+    toast(normalized.message);
+    return false;
+  }
+  const map = type === "fgts" ? createFgtsMap(normalized.config) : createContributionMap(normalized.config);
+  if (!map.size) {
+    toast("Nenhum lançamento foi gerado. Confira os meses informados.");
+    return false;
+  }
+  state.schedules[type] = map;
+  recalculateCurrentSimulation();
+  persistCurrentSimulationIfSaved();
+  toast(type === "fgts" ? "FGTS aplicado à simulação." : "Aportes aplicados à simulação.");
+  return true;
 }
 
 function clearSchedule(kind) {
   state.schedules[kind] = new Map();
+  recalculateCurrentSimulation();
+  persistCurrentSimulationIfSaved();
+  toast(kind === "fgts" ? "FGTS removido da simulação." : "Aportes removidos da simulação.");
+  return true;
+}
+
+function recalculateCurrentSimulation() {
   renderAll();
 }
 
-function updateFgtsStatus() {
-  const status = document.querySelector("[data-fgts-status]");
-  const active = state.schedules.fgts.size > 0;
-  status.textContent = active ? `FGTS ativo: ${state.schedules.fgts.size} lançamentos` : "FGTS inativo";
-  status.classList.toggle("is-active", active);
+function normalizeScheduleConfig(config, simulationMonths) {
+  const value = Number(config.value) || 0;
+  const periodicity = Number.parseInt(config.periodicity, 10) || 0;
+  const firstMonth = Number.parseInt(config.firstMonth, 10) || 0;
+  const rawLimit = Number.parseInt(config.limitMonth, 10) || 0;
+  const maxMonth = Math.max(1, Number.parseInt(simulationMonths, 10) || 1);
+  const limitMonth = rawLimit > 0 ? rawLimit : maxMonth;
+
+  if (value <= 0) return { valid: false, message: "Informe um valor maior que zero." };
+  if (periodicity < 1) return { valid: false, message: "Informe uma periodicidade válida." };
+  if (firstMonth < 1) return { valid: false, message: "Informe o primeiro mês do lançamento." };
+  if (firstMonth > maxMonth) return { valid: false, message: "O primeiro mês não pode ser maior que o prazo da simulação." };
+  if (limitMonth < firstMonth) return { valid: false, message: "O mês limite deve ser maior ou igual ao primeiro mês." };
+
+  return {
+    valid: true,
+    config: {
+      value,
+      periodicity,
+      firstMonth,
+      limitMonth: Math.min(limitMonth, maxMonth),
+    },
+  };
+}
+
+function updateScheduleStatus() {
+  updateStatusChip("[data-manual-status]", state.schedules.manual, "Aportes");
+  updateStatusChip("[data-fgts-status]", state.schedules.fgts, "FGTS");
+}
+
+function updateStatusChip(selector, map, label) {
+  const status = document.querySelector(selector);
+  if (!status) return;
+  const next = scheduleStatus(label, map);
+  status.textContent = next.text;
+  status.classList.toggle("is-active", next.active);
+}
+
+function persistCurrentSimulationIfSaved() {
+  if (!state.currentSimulationId) return;
+  const saved = saveSimulation({
+    id: state.currentSimulationId,
+    type: "amortizacao",
+    clientName: state.input.cliente || "Cliente sem nome",
+    input: state.input,
+    schedules: {
+      manual: [...state.schedules.manual.entries()],
+      fgts: [...state.schedules.fgts.entries()],
+    },
+    summary: state.stats,
+  });
+  state.currentSimulationId = saved.id;
 }
 
 function renderRent() {
@@ -616,8 +683,13 @@ function setupTheme() {
     const nextTheme = document.body.dataset.theme === "dark" ? "light" : "dark";
     document.body.dataset.theme = nextTheme;
     localStorage.setItem("imovel-toolkit-theme", nextTheme);
+    syncEmbeddedSimulatorThemes();
     renderIcons();
   });
+  document.querySelectorAll(".embedded-simulator-frame").forEach((frame) => {
+    frame.addEventListener("load", syncEmbeddedSimulatorThemes);
+  });
+  syncEmbeddedSimulatorThemes();
 }
 
 function renderIcons() {
@@ -656,4 +728,17 @@ function renderIcons() {
 
 function icon(content) {
   return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${content}</svg>`;
+}
+
+function syncEmbeddedSimulatorThemes() {
+  const theme = document.body.dataset.theme || "light";
+  document.querySelectorAll(".embedded-simulator-frame").forEach((frame) => {
+    try {
+      frame.contentWindow?.postMessage({ type: "imovel-toolkit-theme", theme }, window.location.origin);
+      frame.contentDocument?.documentElement?.setAttribute("data-theme", theme);
+      frame.contentDocument?.body?.setAttribute("data-theme", theme);
+    } catch {
+      frame.contentWindow?.postMessage({ type: "imovel-toolkit-theme", theme }, "*");
+    }
+  });
 }

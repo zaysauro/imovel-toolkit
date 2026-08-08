@@ -56,6 +56,14 @@
             <span class="icon" data-icon="building"></span>
             <span class="nav-label">Evolução de Obra</span>
           </a>
+          <a href="#hauer4you" class="nav-link nav-item" data-route="hauer4you" data-tooltip="Hauer4you" aria-label="Simulador Hauer4you">
+            <span class="icon" data-icon="building"></span>
+            <span class="nav-label">Hauer4you</span>
+          </a>
+          <a href="#valorreal" class="nav-link nav-item" data-route="valorreal" data-tooltip="ValorReal" aria-label="Simulador ValorReal">
+            <span class="icon" data-icon="building"></span>
+            <span class="nav-label">ValorReal</span>
+          </a>
           <a href="#renda" class="nav-link nav-item" data-route="renda" data-tooltip="Calculadora de Renda" aria-label="Calculadora de Renda">
             <span class="icon" data-icon="income"></span>
             <span class="nav-label">Calculadora de Renda</span>
@@ -188,7 +196,10 @@
                 <p class="caption">Planilha de amortização</p>
                 <h2>Dados da simulação</h2>
               </div>
-              <div class="status-chip" data-fgts-status>FGTS inativo</div>
+              <div class="schedule-status-row">
+                <div class="status-chip" data-manual-status>Aportes inativos</div>
+                <div class="status-chip" data-fgts-status>FGTS inativo</div>
+              </div>
             </div>
             <form class="form-grid" data-amortization-form>
               <label>Nome do cliente<input name="cliente" placeholder="Digite o nome do cliente" autocomplete="name"></label>
@@ -286,6 +297,22 @@
 
         <section class="page utility-page" id="entrada" data-page="entrada"></section>
         <section class="page utility-page" id="construcao" data-page="construcao"></section>
+        <section class="page embedded-simulator-page" id="hauer4you" data-page="hauer4you">
+          <iframe
+            class="embedded-simulator-frame"
+            src="hauer4you.html"
+            title="Simulador Pride Hauer4you"
+            loading="lazy"
+          ></iframe>
+        </section>
+        <section class="page embedded-simulator-page" id="valorreal" data-page="valorreal">
+          <iframe
+            class="embedded-simulator-frame"
+            src="valorreal.html"
+            title="Simulador ValorReal"
+            loading="lazy"
+          ></iframe>
+        </section>
         <section class="page utility-page" id="renda" data-page="renda"></section>
         <section class="page utility-page" id="configuracoes" data-page="configuracoes"></section>
         <section class="page utility-page" id="glossario" data-page="glossario"></section>

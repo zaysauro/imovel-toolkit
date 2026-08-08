@@ -18,20 +18,20 @@ export function setupModals({ onApply, onClear }) {
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       const data = new FormData(form);
-      onApply(form.dataset.scheduleForm, {
+      const applied = onApply(form.dataset.scheduleForm, {
         value: parseNumber(data.get("valor")),
-        periodicity: Number(data.get("periodicidade")),
-        firstMonth: Number(data.get("primeiroMes")),
-        limitMonth: Number(data.get("limiteMes")),
+        periodicity: Number.parseInt(data.get("periodicidade"), 10),
+        firstMonth: Number.parseInt(data.get("primeiroMes"), 10),
+        limitMonth: Number.parseInt(data.get("limiteMes"), 10),
       });
-      closeModal(form.closest("[data-modal]"));
+      if (applied !== false) closeModal(form.closest("[data-modal]"));
     });
   });
 
   document.querySelectorAll("[data-clear-schedule]").forEach((button) => {
     button.addEventListener("click", () => {
-      onClear(button.dataset.clearSchedule);
-      closeModal(button.closest("[data-modal]"));
+      const cleared = onClear(button.dataset.clearSchedule);
+      if (cleared !== false) closeModal(button.closest("[data-modal]"));
     });
   });
 }

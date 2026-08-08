@@ -1,8 +1,8 @@
 :root {
   --primary: #c9a96a;
   --primary-hover: #b8924f;
-  --dark: #171b22;
-  --sidebar-bg: #1d222b;
+  --dark: #1b1712;
+  --sidebar-bg: #241f19;
   --bg: #f5f7fa;
   --surface: #ffffff;
   --surface-soft: #f8fafc;
@@ -26,14 +26,14 @@
 }
 
 body[data-theme="dark"] {
-  --bg: #101319;
-  --surface: #171b22;
-  --surface-soft: #1d222b;
-  --text: #f7f8fb;
-  --muted: #a8b0bd;
-  --border: rgba(231, 234, 240, 0.12);
-  --shadow: 0 22px 70px rgba(0, 0, 0, 0.28);
-  --shadow-hover: 0 30px 90px rgba(0, 0, 0, 0.38);
+  --bg: #141312;
+  --surface: #1f1c19;
+  --surface-soft: #29241f;
+  --text: #f5efe5;
+  --muted: #b5aa9b;
+  --border: rgba(222, 215, 203, 0.16);
+  --shadow: 0 22px 70px rgba(0, 0, 0, 0.24);
+  --shadow-hover: 0 30px 90px rgba(0, 0, 0, 0.34);
 }
 
 * {
@@ -586,6 +586,14 @@ input[readonly] {
   font-weight: 700;
 }
 
+.schedule-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .status-chip.is-active {
   background: var(--gold-soft);
   color: var(--primary-hover);
@@ -599,6 +607,20 @@ body[data-theme="dark"] .status-chip.is-active {
 
 .utility-page {
   min-height: 360px;
+}
+
+.embedded-simulator-page.is-active {
+  display: block;
+}
+
+.embedded-simulator-frame {
+  display: block;
+  width: 100%;
+  min-height: calc(100vh - 184px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
 @keyframes page-in {

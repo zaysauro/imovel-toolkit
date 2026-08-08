@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Simulador de Parcelamento Imobiliário</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #f7f4ee;
+    --surface:   #ffffff;
+    --card:      #fffdf8;
+    --border:    #ded7cb;
+    --accent:    #8a6a32;
+    --accent2:   #26706b;
+    --warn:      #b7791f;
+    --danger:    #d43f3a;
+    --text:      #26221d;
+    --muted:     #72695d;
+    --label:     #655d52;
+    --radius:    14px;
+    --shadow:    0 12px 36px rgba(73, 57, 35, .12);
+  }
+
+  html[data-theme="dark"], body[data-theme="dark"] {
+    --bg:        #141312;
+    --surface:   #1f1c19;
+    --card:      #26221d;
+    --border:    #3b342d;
+    --accent:    #d6b76d;
+    --accent2:   #73b7ad;
+    --warn:      #f2b84b;
+    --danger:    #ff6b64;
+    --text:      #f5efe5;
+    --muted:     #b5aa9b;
+    --label:     #d0c5b6;
+    --shadow:    0 16px 42px rgba(0,0,0,.32);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 32px 16px 64px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 400;
+    letter-spacing: -.5px;
+    background: linear-gradient(135deg, var(--text) 30%, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  header p {
+    color: var(--muted);
+    font-size: .95rem;
+  }
+
+  .wrapper {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    gap: 20px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "imovel imovel"
+      "entrada posChave"
+      "financ margem"
+      "result result";
+  }
+
+  @media(max-width: 700px) {
+    .wrapper { grid-template-columns: 1fr; grid-template-areas: "imovel" "entrada" "posChave" "financ" "margem" "result"; }
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+  }
+  .card.full { grid-area: imovel; }
+  .card.entrada-card { grid-area: entrada; }
+  .card.pos-card { grid-area: posChave; }
+  .card.financ-card { grid-area: financ; }
+  .card.margem-card { grid-area: margem; }
+  .card.result-card { grid-area: result; }
+
+  .card-title {
+    font-size: .7rem;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+  @media(max-width:500px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: .78rem; color: var(--label); font-weight: 500; }
+
+  input[type="number"], input[type="text"] {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: .95rem;
+    padding: 10px 14px;
+    width: 100%;
+    transition: border-color .2s;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  input:focus { outline: none; border-color: var(--accent); }
+
+  .prefix-wrap { position: relative; }
+  .prefix-wrap span {
+    position: absolute;
+    left: 12px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: .85rem;
+    pointer-events: none;
+  }
+  .prefix-wrap input { padding-left: 32px; }
+
+  /* Anuais */
+  .anual-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 10px;
+    align-items: end;
+    margin-bottom: 10px;
+  }
+  .anual-row input[type="date"] {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: .9rem;
+    padding: 10px 12px;
+    width: 100%;
+  }
+  .anual-row input[type="date"]:focus { outline: none; border-color: var(--accent); }
+
+  .btn-icon {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 8px 12px;
+    transition: all .2s;
+  }
+  .btn-icon:hover { border-color: var(--danger); color: var(--danger); }
+
+  .btn-add {
+    background: transparent;
+    border: 1.5px dashed var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: .85rem;
+    padding: 9px;
+    width: 100%;
+    transition: all .2s;
+    margin-top: 4px;
+  }
+  .btn-add:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Resultado */
+  .result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+  }
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-box::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    border-radius: 3px 0 0 3px;
+    background: var(--accent);
+  }
+  .stat-box.green::before { background: var(--accent2); }
+  .stat-box.warn::before  { background: var(--warn); }
+  .stat-box.danger::before { background: var(--danger); }
+
+  .stat-label { font-size: .72rem; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .stat-value { font-size: 1.35rem; font-weight: 700; color: var(--text); }
+  .stat-sub   { font-size: .78rem; color: var(--muted); margin-top: 3px; }
+
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  .progress-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width .5s ease;
+    background: var(--accent2);
+  }
+  .progress-fill.warn  { background: var(--warn); }
+  .progress-fill.danger { background: var(--danger); }
+
+  .chip {
+    display: inline-block;
+    font-size: .72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+    margin-left: 8px;
+  }
+  .chip.ok     { background: color-mix(in srgb, var(--accent2) 16%, transparent); color: var(--accent2); }
+  .chip.warn   { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+  .chip.danger { background: color-mix(in srgb, var(--danger) 16%, transparent);  color: var(--danger); }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: .78rem;
+    margin-top: 40px;
+  }
+
+  .toggle-row { display: flex; gap: 12px; align-items: center; margin-bottom: 14px; }
+  .toggle-label { font-size: .82rem; color: var(--label); }
+  .toggle {
+    position: relative;
+    width: 40px; height: 22px;
+    cursor: pointer;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; inset: 0;
+    background: var(--border);
+    border-radius: 99px;
+    transition: .3s;
+  }
+  .slider::before {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    left: 3px; top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: .3s;
+  }
+  .toggle input:checked + .slider { background: var(--accent); }
+  .toggle input:checked + .slider::before { transform: translateX(18px); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Simulador Imobiliário</h1>
+  <p>Calcule parcelas, entrada e comprometimento de renda em tempo real</p>
+</header>
+
+<div class="wrapper">
+
+  <!-- IMÓVEL -->
+  <div class="card full">
+    <div class="card-title">Dados do Imóvel</div>
+    <div class="grid3">
+      <div class="field">
+        <label>Valor do Imóvel</label>
+        <div class="prefix-wrap"><span>R$</span><input type="number" id="valorImovel" value="363000" min="0" oninput="calcular()"></div>
+      </div>
+      <div class="field">
+        <label>Valor Documentação</label>
+        <div class="prefix-wrap"><span>R$</span><input type="number" id="valorDoc" value="0" min="0" oninput="calcular()"></div>
+      </div>
+      <div class="field">
+        <label>Financiamento CEF</label>
+        <div class="prefix-wrap"><span>R$</span><input type="number" id="financCEF" value="290400" min="0" oninput="calcular()"></div>
+      </div>
+      <div class="field">
+        <label>Subsídio</label>
+        <div class="prefix-wrap"><span>R$</span><input type="number" id="subsidio" value="0" min="0" oninput="calcular()"></div>
+      </div>
+      <div class="field">
+        <label>FGTS</label>
+        <div class="prefix-wrap"><span>R$</span><input type="number" id="fgts" value="0" min="0" oninput="calcular()"></div>
+      </div>
+      <div class="field">
+        <label>Sinal de Negócio</label>
+        <div class="prefix-wrap"><span>R$</span><input type="number" id="sinal" value="1000" min="0" oninput="calcular()"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENTRADA (período obra) -->
+  <div class="card entrada-card">
+    <div class="card-title">Parcelas durante a Obra</div>
+
+    <div class="field" style="margin-bottom:16px">
+      <label>Qtd. de parcelas mensais</label>
+      <input type="number" id="qtdParcelas" value="42" min="1" oninput="calcular()">
+    </div>
+
+    <div class="card-title" style="margin-top:4px">Parcelas anuais (opcionais)</div>
+    <div id="anuaisContainer"></div>
+    <button class="btn-add" onclick="addAnual()">+ Adicionar parcela anual</button>
+  </div>
+
+  <!-- PÓS CHAVES -->
+  <div class="card pos-card">
+    <div class="card-title">Pós Chaves</div>
+
+    <div class="toggle-row">
+      <label class="toggle">
+        <input type="checkbox" id="temPosChave" onchange="calcular()">
+        <span class="slider"></span>
+      </label>
+      <span class="toggle-label">Tem parcelamento pós chaves?</span>
+    </div>
+
+    <div id="posChaveFields" style="display:none">
+      <div class="grid2" style="margin-bottom:14px">
+        <div class="field">
+          <label>Valor a parcelar</label>
+          <div class="prefix-wrap"><span>R$</span><input type="number" id="valorPosChave" value="0" min="0" oninput="calcular()"></div>
+        </div>
+        <div class="field">
+          <label>Quantidade de parcelas</label>
+          <input type="number" id="qtdPosChave" value="12" min="1" oninput="calcular()">
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="field">
+      <label>Parcela média do financiamento (CEF)</label>
+      <div class="prefix-wrap"><span>R$</span><input type="number" id="parcelaCEF" value="2016" min="0" oninput="calcular()"></div>
+    </div>
+  </div>
+
+  <!-- FINANCEIRO CLIENTE -->
+  <div class="card financ-card">
+    <div class="card-title">Perfil do Cliente</div>
+    <div class="grid2">
+      <div class="field">
+        <label>Renda Bruta Mensal</label>
+        <div class="prefix-wrap"><span>R$</span><input type="number" id="renda" value="7047" min="0" oninput="calcular()"></div>
+      </div>
+      <div class="field">
+        <label>Taxa de juros CEF (% a.a.)</label>
+        <div class="prefix-wrap"><span>%</span><input type="number" id="taxaJuros" value="9" step="0.1" min="0" oninput="calcular()"></div>
+      </div>
+      <div class="field">
+        <label>Prazo do financiamento (meses)</label>
+        <input type="number" id="prazoFinanc" value="360" min="1" oninput="calcular()">
+      </div>
+      <div class="field">
+        <label>Limite comprometimento de renda</label>
+        <div class="prefix-wrap"><span>%</span><input type="number" id="limiteRenda" value="30" step="1" min="1" max="100" oninput="calcular()"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MARGEM -->
+  <div class="card margem-card" id="margemCard">
+    <div class="card-title">Margem do Fluxo</div>
+    <div id="margemContent"></div>
+  </div>
+
+  <!-- RESULTADO -->
+  <div class="card result-card">
+    <div class="card-title">Resumo da Simulação</div>
+    <div class="result-grid" id="resultGrid"></div>
+  </div>
+
+</div>
+
+<footer>Simulação meramente ilustrativa. Consulte um corretor ou banco para condições oficiais.</footer>
+
+<script>
+// ---- Anuais ----
+let anuais = [
+  { data: '2027-12-20', valor: 3000 },
+  { data: '2028-12-20', valor: 3000 },
+  { data: '2029-12-20', valor: 3000 },
+];
+
+function renderAnuais() {
+  const c = document.getElementById('anuaisContainer');
+  c.innerHTML = '';
+  anuais.forEach((a, i) => {
+    const row = document.createElement('div');
+    row.className = 'anual-row';
+    row.innerHTML = `
+      <div class="field"><label>Data</label>
+        <input type="date" value="${a.data}" onchange="anuais[${i}].data=this.value;calcular()">
+      </div>
+      <div class="field"><label>Valor (R$)</label>
+        <input type="number" value="${a.valor}" min="0" onchange="anuais[${i}].valor=+this.value;calcular()">
+      </div>
+      <div><label style="font-size:.78rem;color:transparent">.</label>
+        <button class="btn-icon" onclick="removeAnual(${i})">✕</button>
+      </div>`;
+    c.appendChild(row);
+  });
+}
+
+function addAnual() {
+  anuais.push({ data: '', valor: 0 });
+  renderAnuais();
+  calcular();
+}
+
+function removeAnual(i) {
+  anuais.splice(i, 1);
+  renderAnuais();
+  calcular();
+}
+
+// ---- Toggle pós chave ----
+document.getElementById('temPosChave').addEventListener('change', function () {
+  document.getElementById('posChaveFields').style.display = this.checked ? 'block' : 'none';
+  calcular();
+});
+
+// ---- Formatter ----
+const brl = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const pct = v => v.toFixed(2).replace('.', ',') + '%';
+
+// ---- Calcular ----
+function calcular() {
+  const valorImovel  = +document.getElementById('valorImovel').value  || 0;
+  const valorDoc     = +document.getElementById('valorDoc').value     || 0;
+  const financCEF    = +document.getElementById('financCEF').value    || 0;
+  const subsidio     = +document.getElementById('subsidio').value     || 0;
+  const fgts         = +document.getElementById('fgts').value         || 0;
+  const sinal        = +document.getElementById('sinal').value        || 0;
+  const qtdParcelas  = +document.getElementById('qtdParcelas').value  || 1;
+  const renda        = +document.getElementById('renda').value        || 0;
+  const taxaJuros    = +document.getElementById('taxaJuros').value    || 0;
+  const prazoFinanc  = +document.getElementById('prazoFinanc').value  || 360;
+  const parcelaCEF   = +document.getElementById('parcelaCEF').value   || 0;
+  const limiteRenda  = +document.getElementById('limiteRenda').value  || 30;
+
+  const temPosChave   = document.getElementById('temPosChave').checked;
+  const valorPosChave = temPosChave ? (+document.getElementById('valorPosChave').value || 0) : 0;
+  const qtdPosChave   = temPosChave ? (+document.getElementById('qtdPosChave').value   || 1) : 0;
+
+  // Somas
+  const valorTotal     = valorImovel + valorDoc;
+  const totalAnuais    = anuais.reduce((s, a) => s + (+a.valor || 0), 0);
+  const parcelRealTotal = Math.max(0, valorTotal - financCEF - subsidio - fgts - sinal);
+
+  // Entrada = parcelamento real − parcelas anuais
+  const entrada = Math.max(0, parcelRealTotal - totalAnuais);
+
+  // Parcela mensal durante obra
+  const parcelaObra = qtdParcelas > 0 ? entrada / qtdParcelas : 0;
+
+  // Parcela pós chave
+  const parcelaPosChave = (temPosChave && qtdPosChave > 0) ? valorPosChave / qtdPosChave : 0;
+
+  // Comprometimento durante obra
+  const totalMensalObra = parcelaObra + (sinal > 0 ? 0 : 0);
+  const comprometObra   = renda > 0 ? (parcelaObra / renda) * 100 : 0;
+
+  // Comprometimento pós chave
+  const comprometPos  = renda > 0 ? ((parcelaCEF + parcelaPosChave) / renda) * 100 : 0;
+
+  // Potencial de financiamento (PMT inverso simplificado)
+  let potencial = 0;
+  if (prazoFinanc > 0 && renda > 0) {
+    const im = Math.pow(1 + taxaJuros / 100, 1 / 12) - 1;
+    const maxParcela = renda * limiteRenda / 100;
+    potencial = im > 0 ? maxParcela * ((1 - Math.pow(1 + im, -prazoFinanc)) / im) : maxParcela * prazoFinanc;
+  }
+
+  // % entrada sobre total
+  const pctEntrada = valorTotal > 0 ? (entrada / valorTotal) * 100 : 0;
+
+  // ---- Render MARGEM ----
+  const mc = document.getElementById('margemContent');
+  let statusObra  = comprometObra  <= limiteRenda     ? 'ok'   : comprometObra  <= limiteRenda * 1.15 ? 'warn' : 'danger';
+  let statusPos   = comprometPos   <= limiteRenda     ? 'ok'   : comprometPos   <= limiteRenda * 1.15 ? 'warn' : 'danger';
+  const chipLabel = s => s === 'ok' ? 'OK' : s === 'warn' ? 'Atenção' : 'Acima';
+
+  mc.innerHTML = `
+    <div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:.8rem;color:var(--label)">Renda durante a obra</span>
+        <span style="font-weight:600;font-size:.9rem">${pct(comprometObra)} <span class="chip ${statusObra}">${chipLabel(statusObra)}</span></span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill ${statusObra}" style="width:${Math.min(comprometObra,100)}%"></div></div>
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:.8rem;color:var(--label)">Renda pós chaves (financ.)</span>
+        <span style="font-weight:600;font-size:.9rem">${pct(comprometPos)} <span class="chip ${statusPos}">${chipLabel(statusPos)}</span></span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill ${statusPos}" style="width:${Math.min(comprometPos,100)}%"></div></div>
+    </div>
+    <div class="divider"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+      <span style="font-size:.82rem;color:var(--label)">Potencial de financiamento</span>
+      <span style="font-weight:700;color:var(--accent2)">${brl(potencial)}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+      <span style="font-size:.82rem;color:var(--label)">Limite comprometimento</span>
+      <span style="font-weight:600">${limiteRenda}% da renda</span>
+    </div>
+  `;
+
+  // ---- Render RESULTADO ----
+  const rg = document.getElementById('resultGrid');
+  rg.innerHTML = `
+    <div class="stat-box">
+      <div class="stat-label">Valor Total</div>
+      <div class="stat-value">${brl(valorTotal)}</div>
+      <div class="stat-sub">Imóvel + documentação</div>
+    </div>
+    <div class="stat-box green">
+      <div class="stat-label">Parcelamento Real</div>
+      <div class="stat-value">${brl(parcelRealTotal)}</div>
+      <div class="stat-sub">Total − financ. − subsídio − FGTS − sinal</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Total Parcelas Anuais</div>
+      <div class="stat-value">${brl(totalAnuais)}</div>
+      <div class="stat-sub">${anuais.length} parcela(s) anual(is)</div>
+    </div>
+    <div class="stat-box green">
+      <div class="stat-label">Entrada (a parcelar)</div>
+      <div class="stat-value">${brl(entrada)}</div>
+      <div class="stat-sub">${pct(pctEntrada)} do valor total</div>
+    </div>
+    <div class="stat-box ${statusObra}">
+      <div class="stat-label">Parcela Mensal — Obra</div>
+      <div class="stat-value">${brl(parcelaObra)}</div>
+      <div class="stat-sub">${qtdParcelas}x • ${pct(comprometObra)} da renda</div>
+    </div>
+    ${temPosChave ? `
+    <div class="stat-box warn">
+      <div class="stat-label">Parcela Pós Chave</div>
+      <div class="stat-value">${brl(parcelaPosChave)}</div>
+      <div class="stat-sub">${qtdPosChave}x</div>
+    </div>` : ''}
+    <div class="stat-box ${statusPos}">
+      <div class="stat-label">Parcela CEF (financiamento)</div>
+      <div class="stat-value">${brl(parcelaCEF)}</div>
+      <div class="stat-sub">${pct(comprometPos)} da renda (pós chaves)</div>
+    </div>
+    <div class="stat-box green">
+      <div class="stat-label">Financiamento CEF</div>
+      <div class="stat-value">${brl(financCEF)}</div>
+      <div class="stat-sub">${valorTotal > 0 ? pct((financCEF/valorTotal)*100) : '0%'} do valor total</div>
+    </div>
+  `;
+}
+
+// Init
+function applyTheme(theme) {
+  const nextTheme = theme === 'dark' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = nextTheme;
+  document.body.dataset.theme = nextTheme;
+}
+
+window.addEventListener('message', (event) => {
+  if (event.data?.type === 'imovel-toolkit-theme') applyTheme(event.data.theme);
+});
+
+try {
+  applyTheme(window.parent?.document?.body?.dataset?.theme || localStorage.getItem('imovel-toolkit-theme') || 'light');
+} catch {
+  applyTheme(localStorage.getItem('imovel-toolkit-theme') || 'light');
+}
+
+renderAnuais();
+calcular();
+</script>
+</body>
+</html>

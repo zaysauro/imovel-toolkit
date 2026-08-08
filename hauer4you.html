@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador Hauer4You</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f7f4ee;
+    --surface: #ffffff;
+    --surface2: #f2eee6;
+    --border: #ded7cb;
+    --accent: #8a6a32;
+    --accent2: #26706b;
+    --green: #178f55;
+    --red: #d43f3a;
+    --yellow: #b7791f;
+    --text: #26221d;
+    --muted: #72695d;
+    --mono: 'DM Mono', monospace;
+  }
+
+  html[data-theme="dark"], body[data-theme="dark"] {
+    --bg: #141312;
+    --surface: #1f1c19;
+    --surface2: #29241f;
+    --border: #3b342d;
+    --accent: #d6b76d;
+    --accent2: #73b7ad;
+    --green: #45c47f;
+    --red: #ff6b64;
+    --yellow: #f2b84b;
+    --text: #f5efe5;
+    --muted: #b5aa9b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo-badge {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px; color: white;
+    flex-shrink: 0;
+  }
+
+  header h1 { font-size: 18px; font-weight: 600; }
+  header span { color: var(--muted); font-size: 13px; margin-left: 4px; }
+
+  .status-pill {
+    margin-left: auto;
+    padding: 5px 14px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--mono);
+    letter-spacing: 0.03em;
+  }
+  .status-pill.aprovado { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
+  .status-pill.reprovado { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+  .status-pill.pendente { background: rgba(245,158,11,.12); color: var(--yellow); border: 1px solid rgba(245,158,11,.25); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    min-height: calc(100vh - 69px);
+  }
+
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px;
+    overflow-y: auto;
+    max-height: calc(100vh - 69px);
+    position: sticky;
+    top: 69px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .main {
+    padding: 28px 32px;
+    overflow-y: auto;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .field-group { display: flex; flex-direction: column; gap: 12px; }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  .field input, .field select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color .15s;
+    appearance: none;
+  }
+
+  .field input:focus, .field select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,142,247,.12);
+  }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .sim-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+  }
+  .sim-btn:hover { opacity: .9; transform: translateY(-1px); }
+  .sim-btn:active { transform: translateY(0); }
+
+  /* Results */
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .stat-card .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+
+  .stat-card .stat-val {
+    font-size: 22px;
+    font-weight: 700;
+    font-family: var(--mono);
+    color: var(--text);
+  }
+
+  .stat-card .stat-val.green { color: var(--green); }
+  .stat-card .stat-val.blue { color: var(--accent); }
+  .stat-card .stat-val.yellow { color: var(--yellow); }
+  .stat-card .stat-val.red { color: var(--red); }
+
+  .stat-card .stat-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  /* Table */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .table-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .table-header .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  td {
+    padding: 10px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 62%, transparent);
+    font-family: var(--mono);
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+
+  .td-label { font-family: 'Inter', sans-serif; color: var(--muted); font-size: 12px; }
+
+  /* Motivos */
+  .motivos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 18px;
+  }
+
+  .motivo-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    background: rgba(239,68,68,.06);
+    border: 1px solid rgba(239,68,68,.15);
+    color: #fca5a5;
+  }
+
+  .motivo-item::before {
+    content: '✕';
+    color: var(--red);
+    font-weight: 700;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .motivo-ok {
+    background: rgba(34,197,94,.06);
+    border-color: rgba(34,197,94,.15);
+    color: #86efac;
+  }
+
+  .motivo-ok::before { content: '✓'; color: var(--green); }
+
+  /* Comp renda */
+  .comp-bar-wrap {
+    margin-top: 4px;
+  }
+
+  .comp-bar-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+
+  .comp-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width .4s ease;
+  }
+
+  /* Parcelamento groups */
+  .grupos-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .grupo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+
+  .grupo-card .g-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+
+  .grupo-card .g-val {
+    font-size: 16px;
+    font-weight: 700;
+    font-family: var(--mono);
+    color: var(--accent);
+  }
+
+  .grupo-card .g-parcelas {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  .grupo-card.g-inactive .g-val { color: var(--muted); }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  .empty .empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: .4;
+  }
+
+  .empty h3 { font-size: 16px; color: var(--text); opacity: .6; margin-bottom: 6px; }
+  .empty p { font-size: 13px; }
+
+  /* checkbox-like toggle */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+  }
+
+  .toggle-row label { font-size: 13px; color: var(--text); cursor: pointer; }
+
+  input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+
+  /* pride section */
+  .pride-card {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, transparent), color-mix(in srgb, var(--accent2) 10%, transparent));
+    border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  .pride-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .pride-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .pride-item .p-label { font-size: 11px; color: var(--muted); }
+  .pride-item .p-val { font-size: 14px; font-weight: 600; font-family: var(--mono); }
+
+  /* Divider */
+  .divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+  /* Nota de rodapé */
+  .nota {
+    background: rgba(245,158,11,.06);
+    border: 1px solid rgba(245,158,11,.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #fcd34d;
+    margin-top: 4px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; max-height: none; }
+    .grupos-grid { grid-template-columns: repeat(3, 1fr); }
+    header h1 { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-badge">H</div>
+  <div>
+    <h1>Hauer4You <span>— Simulador Associativo</span></h1>
+  </div>
+  <div class="status-pill pendente" id="globalStatus">Aguardando simulação</div>
+</header>
+
+<div class="layout">
+  <!-- SIDEBAR: Inputs -->
+  <aside class="sidebar">
+    <div>
+      <div class="section-label">Cliente</div>
+      <div class="card field-group">
+        <div class="field">
+          <label>Nome do Cliente</label>
+          <input type="text" id="cliente" placeholder="Ex: João Silva">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Unidade</div>
+      <div class="card field-group">
+        <div class="field">
+          <label>Bloco</label>
+          <select id="bloco" onchange="updateUnidades()">
+            <option value="">Selecione o Bloco</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Unidade</label>
+          <select id="unidade" onchange="onUnidadeChange()">
+            <option value="">Selecione a Unidade</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Vaga</label>
+          <select id="vaga" onchange="simulate()">
+            <option value="">Sem Vaga</option>
+          </select>
+        </div>
+        <div id="unitInfo" style="display:none">
+          <div style="display:flex;gap:12px;margin-top:4px">
+            <div style="flex:1">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:2px">Tipologia</div>
+              <div style="font-size:13px;font-weight:600" id="tipLabel">—</div>
+            </div>
+            <div style="flex:1">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:2px">Valor Unidade</div>
+              <div style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--accent)" id="valorLabel">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Condições Financeiras</div>
+      <div class="card field-group">
+        <div class="field-row">
+          <div class="field">
+            <label>Renda Familiar (R$)</label>
+            <input type="number" id="renda" placeholder="8000" value="" onchange="simulate()">
+          </div>
+          <div class="field">
+            <label>Parc. Máx. Caixa (R$)</label>
+            <input type="number" id="parcelaCaixa" placeholder="1880" value="" onchange="simulate()">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Ato Unidade (R$)</label>
+            <input type="number" id="atoUnidade" placeholder="2000" value="2000" onchange="simulate()">
+          </div>
+          <div class="field">
+            <label>Ato Vaga (R$)</label>
+            <input type="number" id="atoVaga" placeholder="500" value="500" onchange="simulate()">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Subsídio Federal (R$)</label>
+            <input type="number" id="subsidioFederal" placeholder="0" value="0" onchange="simulate()">
+          </div>
+          <div class="field">
+            <label>Subsídio Estadual (R$)</label>
+            <input type="number" id="subsidioEstadual" placeholder="0" value="0" onchange="simulate()">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>FGTS (R$)</label>
+            <input type="number" id="fgts" placeholder="0" value="0" onchange="simulate()">
+          </div>
+          <div class="field">
+            <label>Venda COHAPAR (R$)</label>
+            <input type="number" id="cohapar" placeholder="0" value="0" onchange="simulate()">
+          </div>
+        </div>
+        <div class="toggle-row">
+          <label for="temFiador">Possui Fiador?</label>
+          <input type="checkbox" id="temFiador" onchange="simulate()">
+        </div>
+        <div class="toggle-row">
+          <label for="docGratuita">Documentação Gratuita?</label>
+          <input type="checkbox" id="docGratuita" checked onchange="simulate()">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Parcelamento Durante Obra</div>
+      <div class="card field-group">
+        <div class="field">
+          <label>Nº de Parcelas (máx. 60)</label>
+          <input type="number" id="numParcelas" placeholder="46" min="1" max="60" value="46" onchange="simulate()">
+        </div>
+        <div class="field">
+          <label>Data da 1ª Parcela</label>
+          <input type="date" id="dataParcela" onchange="simulate()">
+        </div>
+        <div style="font-size:12px;color:var(--muted);padding:4px 2px">
+          Balões anuais (até 80% da renda)
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Balão 1 (R$)</label>
+            <input type="number" id="balao1" placeholder="0" value="" onchange="simulate()">
+          </div>
+          <div class="field">
+            <label>Balão 2 (R$)</label>
+            <input type="number" id="balao2" placeholder="0" value="" onchange="simulate()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Simulador Pride (Pós-Obra)</div>
+      <div class="card field-group">
+        <div class="field-row">
+          <div class="field">
+            <label>Financiamento (R$)</label>
+            <input type="number" id="financiamento" placeholder="259200" value="" onchange="simulate()">
+          </div>
+          <div class="field">
+            <label>Parcelas Pós-Obra</label>
+            <input type="number" id="parcelasPosObra" placeholder="14" value="14" min="1" max="60" onchange="simulate()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="sim-btn" onclick="simulate()">▶ Simular</button>
+
+    <div class="nota">
+      Parcelas durante obra corrigidas pelo INCC. Pós-obra: 1% a.m. + IPCA. Esta simulação não contempla reajustes.
+    </div>
+  </aside>
+
+  <!-- MAIN: Results -->
+  <main class="main" id="mainContent">
+    <div class="empty">
+      <div class="empty-icon">🏢</div>
+      <h3>Configure a simulação</h3>
+      <p>Selecione bloco, unidade e preencha as condições financeiras ao lado para iniciar.</p>
+    </div>
+  </main>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+const UNITS = [{"bloco":"BLOCO 01","unidade":"B01.101","valor":326700,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 01","unidade":"B01.102","valor":374900,"avaliacao":365000,"disponivel":true,"tipologia":"2Q - Garden - Adapt"},{"bloco":"BLOCO 01","unidade":"B01.103","valor":369300,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 01","unidade":"B01.104","valor":373600,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 01","unidade":"B01.105","valor":378700,"avaliacao":365000,"disponivel":true,"tipologia":"2Q - Garden - Adapt"},{"bloco":"BLOCO 01","unidade":"B01.106","valor":330500,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 01","unidade":"B01.107","valor":330500,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 01","unidade":"B01.108","valor":378700,"avaliacao":365000,"disponivel":true,"tipologia":"2Q - Garden - Adapt"},{"bloco":"BLOCO 01","unidade":"B01.109","valor":373600,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 01","unidade":"B01.110","valor":369300,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 01","unidade":"B01.111","valor":374900,"avaliacao":365000,"disponivel":true,"tipologia":"2Q - Garden - Adapt"},{"bloco":"BLOCO 01","unidade":"B01.112","valor":326700,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 01","unidade":"B01.201","valor":313200,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 01","unidade":"B01.202","valor":325700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 01","unidade":"B01.203","valor":360600,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 01","unidade":"B01.204","valor":364900,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 01","unidade":"B01.205","valor":329500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 01","unidade":"B01.206","valor":316900,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 01","unidade":"B01.207","valor":316900,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 01","unidade":"B01.208","valor":329500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 01","unidade":"B01.209","valor":364900,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 01","unidade":"B01.210","valor":360600,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 01","unidade":"B01.211","valor":325700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 01","unidade":"B01.212","valor":313200,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 01","unidade":"B01.301","valor":313200,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 01","unidade":"B01.302","valor":325700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 01","unidade":"B01.303","valor":360600,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 01","unidade":"B01.304","valor":364900,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 01","unidade":"B01.305","valor":329500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 01","unidade":"B01.306","valor":316900,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 01","unidade":"B01.307","valor":316900,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 01","unidade":"B01.308","valor":329500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 01","unidade":"B01.309","valor":364900,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 01","unidade":"B01.310","valor":360600,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 01","unidade":"B01.311","valor":325700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 01","unidade":"B01.312","valor":313200,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 01","unidade":"B01.401","valor":310100,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 01","unidade":"B01.402","valor":322500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 01","unidade":"B01.403","valor":357100,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 01","unidade":"B01.404","valor":361400,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 01","unidade":"B01.405","valor":326300,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 01","unidade":"B01.406","valor":313800,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 01","unidade":"B01.407","valor":313800,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 01","unidade":"B01.408","valor":326300,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 01","unidade":"B01.409","valor":361400,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 01","unidade":"B01.410","valor":357100,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 01","unidade":"B01.411","valor":322500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 01","unidade":"B01.412","valor":310100,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 02","unidade":"B02.101","valor":309200,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 02","unidade":"B02.102","valor":358700,"avaliacao":365000,"disponivel":true,"tipologia":"2Q - Garden - Adapt"},{"bloco":"BLOCO 02","unidade":"B02.103","valor":358000,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 02","unidade":"B02.104","valor":364900,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 02","unidade":"B02.105","valor":338900,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 02","unidade":"B02.106","valor":315000,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 02","unidade":"B02.107","valor":315000,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 02","unidade":"B02.108","valor":338900,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 02","unidade":"B02.109","valor":364900,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 02","unidade":"B02.110","valor":358000,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 02","unidade":"B02.111","valor":358700,"avaliacao":365000,"disponivel":true,"tipologia":"2Q - Garden - Adapt"},{"bloco":"BLOCO 02","unidade":"B02.112","valor":309200,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 02","unidade":"B02.201","valor":295500,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 02","unidade":"B02.202","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 02","unidade":"B02.203","valor":349300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 02","unidade":"B02.204","valor":356200,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 02","unidade":"B02.205","valor":318600,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 02","unidade":"B02.206","valor":301400,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 02","unidade":"B02.207","valor":301400,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 02","unidade":"B02.208","valor":318600,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 02","unidade":"B02.209","valor":356200,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 02","unidade":"B02.210","valor":349300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 02","unidade":"B02.211","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 02","unidade":"B02.212","valor":295500,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 02","unidade":"B02.301","valor":295500,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 02","unidade":"B02.302","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 02","unidade":"B02.303","valor":349300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 02","unidade":"B02.304","valor":356200,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 02","unidade":"B02.305","valor":318600,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 02","unidade":"B02.306","valor":301400,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 02","unidade":"B02.307","valor":301400,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 02","unidade":"B02.308","valor":318600,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 02","unidade":"B02.309","valor":356200,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 02","unidade":"B02.310","valor":349300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 02","unidade":"B02.311","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 02","unidade":"B02.312","valor":295500,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 02","unidade":"B02.401","valor":292600,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 02","unidade":"B02.402","valor":309400,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 02","unidade":"B02.403","valor":345800,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 02","unidade":"B02.404","valor":352700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 02","unidade":"B02.405","valor":315500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 02","unidade":"B02.406","valor":298500,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 02","unidade":"B02.407","valor":298500,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 02","unidade":"B02.408","valor":315500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 02","unidade":"B02.409","valor":352700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 02","unidade":"B02.410","valor":345800,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 02","unidade":"B02.411","valor":309400,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 02","unidade":"B02.412","valor":292600,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 03","unidade":"B03.101","valor":300300,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 03","unidade":"B03.102","valor":326800,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 03","unidade":"B03.103","valor":348100,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 03","unidade":"B03.104","valor":354800,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 03","unidade":"B03.105","valor":332800,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 03","unidade":"B03.106","valor":305900,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 03","unidade":"B03.107","valor":305900,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 03","unidade":"B03.108","valor":332800,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 03","unidade":"B03.109","valor":354800,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 03","unidade":"B03.110","valor":348100,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 03","unidade":"B03.111","valor":326800,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 03","unidade":"B03.112","valor":300300,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 03","unidade":"B03.201","valor":286600,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 03","unidade":"B03.202","valor":306500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 03","unidade":"B03.203","valor":339300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 03","unidade":"B03.204","valor":346000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 03","unidade":"B03.205","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 03","unidade":"B03.206","valor":292200,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 03","unidade":"B03.207","valor":292200,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 03","unidade":"B03.208","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 03","unidade":"B03.209","valor":346000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 03","unidade":"B03.210","valor":339300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 03","unidade":"B03.211","valor":306500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 03","unidade":"B03.212","valor":286600,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 03","unidade":"B03.301","valor":286600,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 03","unidade":"B03.302","valor":306500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 03","unidade":"B03.303","valor":339300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 03","unidade":"B03.304","valor":346000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 03","unidade":"B03.305","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 03","unidade":"B03.306","valor":292200,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 03","unidade":"B03.307","valor":292200,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 03","unidade":"B03.308","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 03","unidade":"B03.309","valor":346000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 03","unidade":"B03.310","valor":339300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 03","unidade":"B03.311","valor":306500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 03","unidade":"B03.312","valor":286600,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 03","unidade":"B03.401","valor":283800,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 03","unidade":"B03.402","valor":303500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 03","unidade":"B03.403","valor":336000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 03","unidade":"B03.404","valor":342700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 03","unidade":"B03.405","valor":309500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 03","unidade":"B03.406","valor":289400,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 03","unidade":"B03.407","valor":289400,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 03","unidade":"B03.408","valor":309500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 03","unidade":"B03.409","valor":342700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 03","unidade":"B03.410","valor":336000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 03","unidade":"B03.411","valor":303500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 03","unidade":"B03.412","valor":283800,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 04","unidade":"B04.101","valor":300300,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 04","unidade":"B04.102","valor":353800,"avaliacao":365000,"disponivel":true,"tipologia":"2Q - Garden - Adapt"},{"bloco":"BLOCO 04","unidade":"B04.103","valor":348100,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 04","unidade":"B04.104","valor":354800,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 04","unidade":"B04.105","valor":332800,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 04","unidade":"B04.106","valor":305900,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 04","unidade":"B04.107","valor":305900,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 04","unidade":"B04.108","valor":332800,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 04","unidade":"B04.109","valor":354800,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 04","unidade":"B04.110","valor":348100,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 04","unidade":"B04.111","valor":353800,"avaliacao":365000,"disponivel":true,"tipologia":"2Q - Garden - Adapt"},{"bloco":"BLOCO 04","unidade":"B04.112","valor":300300,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 04","unidade":"B04.201","valor":286600,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 04","unidade":"B04.202","valor":306500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 04","unidade":"B04.203","valor":339300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 04","unidade":"B04.204","valor":346000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 04","unidade":"B04.205","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 04","unidade":"B04.206","valor":292200,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 04","unidade":"B04.207","valor":292200,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 04","unidade":"B04.208","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 04","unidade":"B04.209","valor":346000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 04","unidade":"B04.210","valor":339300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 04","unidade":"B04.211","valor":306500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 04","unidade":"B04.212","valor":286600,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 04","unidade":"B04.301","valor":286600,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 04","unidade":"B04.302","valor":306500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 04","unidade":"B04.303","valor":339300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 04","unidade":"B04.304","valor":346000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 04","unidade":"B04.305","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 04","unidade":"B04.306","valor":292200,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 04","unidade":"B04.307","valor":292200,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 04","unidade":"B04.308","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 04","unidade":"B04.309","valor":346000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 04","unidade":"B04.310","valor":339300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 04","unidade":"B04.311","valor":306500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 04","unidade":"B04.312","valor":286600,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 04","unidade":"B04.401","valor":283800,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 04","unidade":"B04.402","valor":303500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 04","unidade":"B04.403","valor":336000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 04","unidade":"B04.404","valor":342700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 04","unidade":"B04.405","valor":309500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 04","unidade":"B04.406","valor":289400,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 04","unidade":"B04.407","valor":289400,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 04","unidade":"B04.408","valor":309500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 04","unidade":"B04.409","valor":342700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 04","unidade":"B04.410","valor":336000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 04","unidade":"B04.411","valor":303500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 04","unidade":"B04.412","valor":283800,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 05","unidade":"B05.101","valor":296800,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 05","unidade":"B05.102","valor":327600,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 05","unidade":"B05.103","valor":351100,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 05","unidade":"B05.104","valor":347100,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 05","unidade":"B05.105","valor":324000,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 05","unidade":"B05.106","valor":293500,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 05","unidade":"B05.201","valor":283000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 05","unidade":"B05.202","valor":307300,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 05","unidade":"B05.203","valor":342400,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 05","unidade":"B05.204","valor":338400,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 05","unidade":"B05.205","valor":303700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 05","unidade":"B05.206","valor":279700,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 05","unidade":"B05.301","valor":283000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 05","unidade":"B05.302","valor":307300,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 05","unidade":"B05.303","valor":342400,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 05","unidade":"B05.304","valor":338400,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 05","unidade":"B05.305","valor":303700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 05","unidade":"B05.306","valor":279700,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 05","unidade":"B05.401","valor":280300,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 05","unidade":"B05.402","valor":304300,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 05","unidade":"B05.403","valor":339000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 05","unidade":"B05.404","valor":335000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 05","unidade":"B05.405","valor":300700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 05","unidade":"B05.406","valor":277000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 06","unidade":"B06.101","valor":296800,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 06","unidade":"B06.102","valor":356600,"avaliacao":365000,"disponivel":true,"tipologia":"2Q - Garden - Adapt"},{"bloco":"BLOCO 06","unidade":"B06.103","valor":351100,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 06","unidade":"B06.104","valor":350500,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 06","unidade":"B06.105","valor":327000,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 06","unidade":"B06.106","valor":296200,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 06","unidade":"B06.107","valor":296200,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 06","unidade":"B06.108","valor":327000,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 06","unidade":"B06.109","valor":350500,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 06","unidade":"B06.110","valor":351100,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 06","unidade":"B06.111","valor":356600,"avaliacao":365000,"disponivel":true,"tipologia":"2Q - Garden - Adapt"},{"bloco":"BLOCO 06","unidade":"B06.112","valor":296800,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 06","unidade":"B06.201","valor":283000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 06","unidade":"B06.202","valor":307300,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 06","unidade":"B06.203","valor":342400,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 06","unidade":"B06.204","valor":341700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 06","unidade":"B06.205","valor":306700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 06","unidade":"B06.206","valor":282500,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 06","unidade":"B06.207","valor":282500,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 06","unidade":"B06.208","valor":306700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 06","unidade":"B06.209","valor":341700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 06","unidade":"B06.210","valor":342400,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 06","unidade":"B06.211","valor":307300,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 06","unidade":"B06.212","valor":283000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 06","unidade":"B06.301","valor":283000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 06","unidade":"B06.302","valor":307300,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 06","unidade":"B06.303","valor":342400,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 06","unidade":"B06.304","valor":341700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 06","unidade":"B06.305","valor":306700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 06","unidade":"B06.306","valor":282500,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 06","unidade":"B06.307","valor":282500,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 06","unidade":"B06.308","valor":306700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 06","unidade":"B06.309","valor":341700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 06","unidade":"B06.310","valor":342400,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 06","unidade":"B06.311","valor":307300,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 06","unidade":"B06.312","valor":283000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 06","unidade":"B06.401","valor":280300,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 06","unidade":"B06.402","valor":304300,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 06","unidade":"B06.403","valor":339000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 06","unidade":"B06.404","valor":338400,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 06","unidade":"B06.405","valor":303700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 06","unidade":"B06.406","valor":279700,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 06","unidade":"B06.407","valor":279700,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 06","unidade":"B06.408","valor":303700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 06","unidade":"B06.409","valor":338400,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 06","unidade":"B06.410","valor":339000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 06","unidade":"B06.411","valor":304300,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 06","unidade":"B06.412","valor":280300,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 07","unidade":"B07.101","valor":309200,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 07","unidade":"B07.102","valor":332700,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 07","unidade":"B07.103","valor":358000,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 07","unidade":"B07.104","valor":364900,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 07","unidade":"B07.105","valor":338900,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 07","unidade":"B07.106","valor":315000,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 07","unidade":"B07.107","valor":315000,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 07","unidade":"B07.108","valor":338900,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 07","unidade":"B07.109","valor":364900,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 07","unidade":"B07.110","valor":358000,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 07","unidade":"B07.111","valor":332700,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 07","unidade":"B07.112","valor":309200,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 07","unidade":"B07.201","valor":295500,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 07","unidade":"B07.202","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 07","unidade":"B07.203","valor":349300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 07","unidade":"B07.204","valor":356200,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 07","unidade":"B07.205","valor":318600,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 07","unidade":"B07.206","valor":301400,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 07","unidade":"B07.207","valor":301400,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 07","unidade":"B07.208","valor":318600,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 07","unidade":"B07.209","valor":356200,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 07","unidade":"B07.210","valor":349300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 07","unidade":"B07.211","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 07","unidade":"B07.212","valor":295500,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 07","unidade":"B07.301","valor":295500,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 07","unidade":"B07.302","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 07","unidade":"B07.303","valor":349300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 07","unidade":"B07.304","valor":356200,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 07","unidade":"B07.305","valor":318600,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 07","unidade":"B07.306","valor":301400,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 07","unidade":"B07.307","valor":301400,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 07","unidade":"B07.308","valor":318600,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 07","unidade":"B07.309","valor":356200,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 07","unidade":"B07.310","valor":349300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 07","unidade":"B07.311","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 07","unidade":"B07.312","valor":295500,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 07","unidade":"B07.401","valor":292600,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 07","unidade":"B07.402","valor":309400,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 07","unidade":"B07.403","valor":345800,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 07","unidade":"B07.404","valor":352700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 07","unidade":"B07.405","valor":315500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 07","unidade":"B07.406","valor":298500,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 07","unidade":"B07.407","valor":298500,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 07","unidade":"B07.408","valor":315500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 07","unidade":"B07.409","valor":352700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 07","unidade":"B07.410","valor":345800,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 07","unidade":"B07.411","valor":309400,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 07","unidade":"B07.412","valor":292600,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 08","unidade":"B08.101","valor":300300,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 08","unidade":"B08.102","valor":353800,"avaliacao":365000,"disponivel":true,"tipologia":"2Q - Garden - Adapt"},{"bloco":"BLOCO 08","unidade":"B08.103","valor":348100,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 08","unidade":"B08.104","valor":354800,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 08","unidade":"B08.105","valor":359800,"avaliacao":365000,"disponivel":true,"tipologia":"2Q - Garden - Adapt"},{"bloco":"BLOCO 08","unidade":"B08.106","valor":305900,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 08","unidade":"B08.107","valor":305900,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 08","unidade":"B08.108","valor":359800,"avaliacao":365000,"disponivel":true,"tipologia":"2Q - Garden - Adapt"},{"bloco":"BLOCO 08","unidade":"B08.109","valor":354800,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 08","unidade":"B08.110","valor":348100,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 08","unidade":"B08.111","valor":353800,"avaliacao":365000,"disponivel":true,"tipologia":"2Q - Garden - Adapt"},{"bloco":"BLOCO 08","unidade":"B08.112","valor":300300,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 08","unidade":"B08.201","valor":286600,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 08","unidade":"B08.202","valor":306500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 08","unidade":"B08.203","valor":339300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 08","unidade":"B08.204","valor":346000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 08","unidade":"B08.205","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 08","unidade":"B08.206","valor":292200,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 08","unidade":"B08.207","valor":292200,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 08","unidade":"B08.208","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 08","unidade":"B08.209","valor":346000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 08","unidade":"B08.210","valor":339300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 08","unidade":"B08.211","valor":306500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 08","unidade":"B08.212","valor":286600,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 08","unidade":"B08.301","valor":286600,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 08","unidade":"B08.302","valor":306500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 08","unidade":"B08.303","valor":339300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 08","unidade":"B08.304","valor":346000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 08","unidade":"B08.305","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 08","unidade":"B08.306","valor":292200,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 08","unidade":"B08.307","valor":292200,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 08","unidade":"B08.308","valor":312500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 08","unidade":"B08.309","valor":346000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 08","unidade":"B08.310","valor":339300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 08","unidade":"B08.311","valor":306500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 08","unidade":"B08.312","valor":286600,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 08","unidade":"B08.401","valor":283800,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 08","unidade":"B08.402","valor":303500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 08","unidade":"B08.403","valor":336000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 08","unidade":"B08.404","valor":342700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 08","unidade":"B08.405","valor":309500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 08","unidade":"B08.406","valor":289400,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 08","unidade":"B08.407","valor":289400,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 08","unidade":"B08.408","valor":309500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 08","unidade":"B08.409","valor":342700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 08","unidade":"B08.410","valor":336000,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 08","unidade":"B08.411","valor":303500,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 08","unidade":"B08.412","valor":283800,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 09","unidade":"B09.101","valor":287500,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 09","unidade":"B09.102","valor":318000,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 09","unidade":"B09.103","valor":342400,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 09","unidade":"B09.104","valor":346400,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 09","unidade":"B09.105","valor":321600,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 09","unidade":"B09.106","valor":290700,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 09","unidade":"B09.107","valor":290700,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 09","unidade":"B09.108","valor":321600,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 09","unidade":"B09.109","valor":346400,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 09","unidade":"B09.110","valor":342400,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 09","unidade":"B09.111","valor":318000,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 09","unidade":"B09.112","valor":287500,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 09","unidade":"B09.201","valor":273700,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 09","unidade":"B09.202","valor":297700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 09","unidade":"B09.203","valor":333700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 09","unidade":"B09.204","valor":337600,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 09","unidade":"B09.205","valor":301200,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 09","unidade":"B09.206","valor":277000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 09","unidade":"B09.207","valor":277000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 09","unidade":"B09.208","valor":301200,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 09","unidade":"B09.209","valor":337600,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 09","unidade":"B09.210","valor":333700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 09","unidade":"B09.211","valor":297700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 09","unidade":"B09.212","valor":273700,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 09","unidade":"B09.301","valor":273700,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 09","unidade":"B09.302","valor":297700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 09","unidade":"B09.303","valor":333700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 09","unidade":"B09.304","valor":337600,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 09","unidade":"B09.305","valor":301200,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 09","unidade":"B09.306","valor":277000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 09","unidade":"B09.307","valor":277000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 09","unidade":"B09.308","valor":301200,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 09","unidade":"B09.309","valor":337600,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 09","unidade":"B09.310","valor":333700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 09","unidade":"B09.311","valor":297700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 09","unidade":"B09.312","valor":273700,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 09","unidade":"B09.401","valor":271000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 09","unidade":"B09.402","valor":294800,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 09","unidade":"B09.403","valor":330400,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 09","unidade":"B09.404","valor":334300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 09","unidade":"B09.405","valor":298300,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 09","unidade":"B09.406","valor":274300,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 09","unidade":"B09.407","valor":274300,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 09","unidade":"B09.408","valor":298300,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 09","unidade":"B09.409","valor":334300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 09","unidade":"B09.410","valor":330400,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 09","unidade":"B09.411","valor":294800,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 09","unidade":"B09.412","valor":271000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 10","unidade":"B10.101","valor":287500,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 10","unidade":"B10.102","valor":318000,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 10","unidade":"B10.103","valor":342400,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 10","unidade":"B10.104","valor":346400,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 10","unidade":"B10.105","valor":321600,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 10","unidade":"B10.106","valor":290700,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 10","unidade":"B10.107","valor":290700,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 10","unidade":"B10.108","valor":321600,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 10","unidade":"B10.109","valor":346400,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 10","unidade":"B10.110","valor":342400,"avaliacao":346000,"disponivel":true,"tipologia":"2Q - Varanda - Garden"},{"bloco":"BLOCO 10","unidade":"B10.111","valor":318000,"avaliacao":336000,"disponivel":true,"tipologia":"2Q - Garden"},{"bloco":"BLOCO 10","unidade":"B10.112","valor":287500,"avaliacao":320000,"disponivel":true,"tipologia":"1Q - Garden"},{"bloco":"BLOCO 10","unidade":"B10.201","valor":273700,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 10","unidade":"B10.202","valor":297700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 10","unidade":"B10.203","valor":333700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 10","unidade":"B10.204","valor":337600,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 10","unidade":"B10.205","valor":301200,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 10","unidade":"B10.206","valor":277000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 10","unidade":"B10.207","valor":277000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 10","unidade":"B10.208","valor":301200,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 10","unidade":"B10.209","valor":337600,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 10","unidade":"B10.210","valor":333700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 10","unidade":"B10.211","valor":297700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 10","unidade":"B10.212","valor":273700,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 10","unidade":"B10.301","valor":273700,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 10","unidade":"B10.302","valor":297700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 10","unidade":"B10.303","valor":333700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 10","unidade":"B10.304","valor":337600,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 10","unidade":"B10.305","valor":301200,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 10","unidade":"B10.306","valor":277000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 10","unidade":"B10.307","valor":277000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 10","unidade":"B10.308","valor":301200,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 10","unidade":"B10.309","valor":337600,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 10","unidade":"B10.310","valor":333700,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 10","unidade":"B10.311","valor":297700,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 10","unidade":"B10.312","valor":273700,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 10","unidade":"B10.401","valor":271000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 10","unidade":"B10.402","valor":294800,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 10","unidade":"B10.403","valor":330400,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 10","unidade":"B10.404","valor":334300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 10","unidade":"B10.405","valor":298300,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 10","unidade":"B10.406","valor":274300,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 10","unidade":"B10.407","valor":274300,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"},{"bloco":"BLOCO 10","unidade":"B10.408","valor":298300,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 10","unidade":"B10.409","valor":334300,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 10","unidade":"B10.410","valor":330400,"avaliacao":376000,"disponivel":true,"tipologia":"2Q - Sacada"},{"bloco":"BLOCO 10","unidade":"B10.411","valor":294800,"avaliacao":324000,"disponivel":true,"tipologia":"2Q"},{"bloco":"BLOCO 10","unidade":"B10.412","valor":271000,"avaliacao":310000,"disponivel":true,"tipologia":"1Q"}];
+
+const BLOCO_VAGAS = {"BLOCO 01":["VG 147","VG 148","VG 149","VG 150","VG 151","VG 152","VG 153","VG 154","VG 155","VG 156","VG 159","VG 160","VG 161","VG 162","VG 295","VG 296","VG 297","VG 298","VG 299","VG 300","VG 301","VG 302","VG 303","VG 304","VG 305","VG 306","VG 307","VG 308","VG 309","VG 310","VG 311","VG 312"],"BLOCO 02":["VG 005","VG 006","VG 007","VG 008","VG 009","VG 010","VG 011","VG 012","VG 013","VG 014","VG 015","VG 016","VG 017","VG 018","VG 019","VG 130","VG 131","VG 132","VG 133","VG 134","VG 135","VG 136","VG 137","VG 138","VG 139","VG 140","VG 141","VG 142","VG 143","VG 144","VG 145","VG 146"],"BLOCO 03":["VG 020","VG 021","VG 022","VG 023","VG 024","VG 025","VG 026","VG 027","VG 028","VG 029","VG 030","VG 031","VG 032","VG 033","VG 034","VG 113","VG 114","VG 115","VG 116","VG 117","VG 118","VG 119","VG 120","VG 121","VG 122","VG 123","VG 124","VG 125","VG 126","VG 127","VG 128","VG 129"],"BLOCO 04":["VG 035","VG 036","VG 037","VG 038","VG 039","VG 040","VG 041","VG 042","VG 043","VG 044","VG 045","VG 046","VG 047","VG 048","VG 049","VG 098","VG 099","VG 100","VG 101","VG 102","VG 103","VG 104","VG 105","VG 106","VG 107","VG 108","VG 109","VG 110","VG 111","VG 112"],"BLOCO 05":["VG 050","VG 051","VG 052","VG 053","VG 054","VG 055","VG 056","VG 057","VG 090","VG 091","VG 092","VG 093","VG 094","VG 095","VG 096","VG 097"],"BLOCO 06":["VG 058","VG 059","VG 060","VG 061","VG 062","VG 063","VG 064","VG 065","VG 066","VG 067","VG 068","VG 069","VG 070","VG 071","VG 072","VG 073","VG 074","VG 075","VG 076","VG 079","VG 080","VG 081","VG 082","VG 083","VG 084","VG 085","VG 086","VG 087","VG 088","VG 089"],"BLOCO 07":["VG 163","VG 164","VG 165","VG 166","VG 167","VG 168","VG 169","VG 170","VG 171","VG 172","VG 173","VG 174","VG 175","VG 176","VG 177","VG 178","VG 179","VG 278","VG 279","VG 280","VG 281","VG 282","VG 283","VG 284","VG 285","VG 286","VG 287","VG 288","VG 289","VG 290","VG 291","VG 292","VG 293","VG 294"],"BLOCO 08":["VG 180","VG 181","VG 182","VG 183","VG 184","VG 185","VG 186","VG 187","VG 188","VG 189","VG 190","VG 191","VG 192","VG 263","VG 264","VG 265","VG 266","VG 267","VG 268","VG 269","VG 270","VG 271","VG 272","VG 273","VG 274","VG 275","VG 276","VG 277"],"BLOCO 09":["VG 193","VG 194","VG 195","VG 196","VG 197","VG 198","VG 199","VG 200","VG 201","VG 202","VG 203","VG 204","VG 205","VG 206","VG 207","VG 208","VG 209","VG 248","VG 249","VG 250","VG 251","VG 252","VG 253","VG 254","VG 255","VG 256","VG 257","VG 258","VG 259","VG 260","VG 261","VG 262"],"BLOCO 10":["VG 210","VG 211","VG 212","VG 213","VG 214","VG 215","VG 216","VG 217","VG 218","VG 219","VG 220","VG 221","VG 224","VG 225","VG 226","VG 227","VG 228","VG 229","VG 230","VG 231","VG 232","VG 233","VG 234","VG 235","VG 236","VG 237","VG 242","VG 243","VG 244","VG 245","VG 246","VG 247"]};
+
+const VAGA_VALOR = 29000;
+
+// CONFIG
+const CFG = {
+  PARCELA_MIN: 200,
+  PRAZO_OBRA: 46,
+  PRAZO_PARCELAMENTO: 60,
+  CORRECAO_POS_OBRA: 0.01,
+  PCT_PARCELAMENTO: 0.25,
+  PCT_PRO_SOLUTO: 0.15,
+  PRO_SOLUTO_ISENTA_FIADOR: 0.10,
+  SINAL_PADRAO: 2000,
+  COMP_MAX_RENDA: 0.45,
+  ATO_MAX_VAGA: 1160,
+  COHAPAR_LIMITE: 6484,
+  SUBSÍDIO_COHAPAR: 20000,
+  GRUPOS: [5, 11, 12, 12, 6],
+  PARCELAS_POS_OBRA: 14,
+};
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+function init() {
+  const blocos = [...new Set(UNITS.map(u => u.bloco))].sort();
+  const sel = document.getElementById('bloco');
+  blocos.forEach(b => {
+    const o = document.createElement('option');
+    o.value = b; o.textContent = b;
+    sel.appendChild(o);
+  });
+
+  // Default date
+  const d = new Date();
+  d.setDate(d.getDate() + 10);
+  document.getElementById('dataParcela').value = d.toISOString().split('T')[0];
+}
+
+function updateUnidades() {
+  const bloco = document.getElementById('bloco').value;
+  const selU = document.getElementById('unidade');
+  const selV = document.getElementById('vaga');
+
+  selU.innerHTML = '<option value="">Selecione a Unidade</option>';
+  selV.innerHTML = '<option value="">Sem Vaga</option>';
+  document.getElementById('unitInfo').style.display = 'none';
+
+  if (!bloco) return;
+
+  UNITS.filter(u => u.bloco === bloco).forEach(u => {
+    const o = document.createElement('option');
+    o.value = u.unidade; o.textContent = u.unidade + ' — ' + u.tipologia + (u.disponivel ? '' : ' (Indisponível)');
+    selU.appendChild(o);
+  });
+
+  const vagas = BLOCO_VAGAS[bloco] || [];
+  vagas.forEach(v => {
+    const o = document.createElement('option');
+    o.value = v; o.textContent = v + ' — R$ ' + fmt(VAGA_VALOR);
+    selV.appendChild(o);
+  });
+}
+
+function onUnidadeChange() {
+  const un = document.getElementById('unidade').value;
+  if (!un) { document.getElementById('unitInfo').style.display = 'none'; simulate(); return; }
+  const u = UNITS.find(x => x.unidade === un);
+  if (u) {
+    document.getElementById('unitInfo').style.display = 'block';
+    document.getElementById('tipLabel').textContent = u.tipologia;
+    document.getElementById('valorLabel').textContent = 'R$ ' + fmt(u.valor);
+    const is2Q = u.tipologia.startsWith('2Q');
+    // Suggest vaga only if 2Q
+    if (!is2Q) {
+      document.getElementById('vaga').value = '';
+    }
+  }
+  simulate();
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function fmt(n) { return Number(n).toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtC(n) { return 'R$ ' + fmt(n); }
+function pct(n) { return (n*100).toFixed(1) + '%'; }
+function gv(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function gs(id) { return document.getElementById(id).value || ''; }
+function gc(id) { return document.getElementById(id).checked; }
+
+// ─── SIMULATION ──────────────────────────────────────────────────────────────
+function simulate() {
+  const unidade = gs('unidade');
+  if (!unidade) { clearMain(); return; }
+
+  const unit = UNITS.find(u => u.unidade === unidade);
+  if (!unit) return;
+
+  const vagaSel = gs('vaga');
+  const valorVaga = vagaSel ? VAGA_VALOR : 0;
+  const valorUnidade = unit.valor;
+  const avaliacao = unit.avaliacao;
+
+  const renda = gv('renda');
+  const parcelaCaixa = gv('parcelaCaixa');
+  const atoUnidade = gv('atoUnidade') || CFG.SINAL_PADRAO;
+  const atoVaga = gv('atoVaga');
+  const subsidioFederal = gv('subsidioFederal');
+  const subsidioEstadual = gv('subsidioEstadual');
+  const fgts = gv('fgts');
+  const cohapar = gv('cohapar');
+  const temFiador = gc('temFiador');
+  const docGratuita = gc('docGratuita');
+  const numParcelas = parseInt(document.getElementById('numParcelas').value) || 46;
+  const balao1 = gv('balao1');
+  const balao2 = gv('balao2');
+  const financiamento = gv('financiamento');
+  const parcelasPosObra = parseInt(document.getElementById('parcelasPosObra').value) || CFG.PARCELAS_POS_OBRA;
+
+  const valorTotal = valorUnidade + valorVaga;
+  const docCusto = docGratuita ? 0 : 0; // simplificado
+  const imovelMaisDoc = valorUnidade + docCusto;
+  const finReal = financiamento > 0 ? financiamento : 0;
+
+  // Saldo a parcelar na obra após financiamento, entrada e subsídios.
+  const totalEntradaRecursos = atoUnidade + atoVaga + subsidioFederal + subsidioEstadual + fgts + cohapar;
+  const saldoUnidadeRaw = valorUnidade - atoUnidade - subsidioFederal - subsidioEstadual - fgts - cohapar - finReal;
+  const saldoVagaRaw = valorVaga - atoVaga;
+  const saldoUnidade = Math.max(0, saldoUnidadeRaw);
+  const saldoVaga = Math.max(0, saldoVagaRaw);
+  const saldoTotal = saldoUnidade + saldoVaga;
+
+  // Parcelas mensais durante obra
+  // Total de parcelas = numParcelas, distribuídas entre os grupos
+  // Proporção vaga/unidade
+  const propVaga = valorVaga > 0 ? 0.3 : 0;
+  const propUnidade = 1 - propVaga;
+
+  const parcelaMensalTotal = numParcelas > 0 ? saldoTotal / numParcelas : 0;
+  const parcelaMensalUnidade = numParcelas > 0 ? saldoUnidade / numParcelas : 0;
+  const parcelaMensalVaga = numParcelas > 0 ? saldoVaga / numParcelas : 0;
+
+  // Comprometimento de renda durante obra
+  const compRendaObra = renda > 0 ? (parcelaMensalTotal) / renda : 0;
+
+  // Pós-obra - parcela Pride
+  const saldoVagaFinal = saldoVaga;
+  const parcelaVagaPosObra = parcelasPosObra > 0 ? saldoVagaFinal / parcelasPosObra : 0;
+  const parcelaUnidadePosObra = parcelasPosObra > 0 ? finReal / parcelasPosObra : 0;
+  const parcelaTotalPosObra = parcelaUnidadePosObra + parcelaVagaPosObra;
+
+  // Risco pós-obra
+  const compRendaPosObra = renda > 0 ? (parcelaTotalPosObra + (parcelaCaixa || 0)) / renda : 0;
+
+  // % entrada
+  const pctEntrada = valorTotal > 0 ? totalEntradaRecursos / valorTotal : 0;
+  // % parcelamento construtor
+  const pctParcelamento = valorUnidade > 0 ? saldoUnidade / valorUnidade : 0;
+  // Pró-soluto
+  const proSoluto = valorUnidade > 0 ? saldoUnidade / valorUnidade : 0;
+
+  // ── VALIDAÇÕES ─────────────────────────────────────────────────────────────
+  const pendencias = [];
+  const alertas = [];
+
+  const is1Q = unit.tipologia.startsWith('1Q');
+  const is2Q = unit.tipologia.startsWith('2Q');
+
+  if (parcelaMensalUnidade > 0 && parcelaMensalUnidade < CFG.PARCELA_MIN)
+    pendencias.push('Parcela da unidade abaixo de R$ 200 (mínimo)');
+
+  if (parcelaMensalVaga > 0 && parcelaMensalVaga < CFG.PARCELA_MIN)
+    pendencias.push('Parcela da vaga abaixo de R$ 200 (mínimo)');
+
+  if (vagaSel && parcelaMensalVaga > parcelaMensalUnidade)
+    pendencias.push('Parcela da vaga é maior que a parcela da unidade');
+
+  if (renda > 0 && compRendaObra > CFG.COMP_MAX_RENDA)
+    pendencias.push(`Comprometimento de renda na obra: ${pct(compRendaObra)} (máx. 45%)`);
+
+  if (renda > 0 && compRendaPosObra > CFG.COMP_MAX_RENDA)
+    pendencias.push(`Comprometimento pós-obra: ${pct(compRendaPosObra)} (máx. 45%)`);
+
+  if (atoUnidade < CFG.SINAL_PADRAO)
+    pendencias.push(`Ato da unidade menor que o padrão de R$ 2.000`);
+
+  if (atoVaga > CFG.ATO_MAX_VAGA)
+    pendencias.push(`Ato da vaga excede máximo de R$ ${fmt(CFG.ATO_MAX_VAGA)} (4%)`);
+
+  if (pctParcelamento > CFG.PCT_PARCELAMENTO)
+    pendencias.push(`% Parcelamento pela construtora: ${pct(pctParcelamento)} (máx. 25%)`);
+
+  if (proSoluto > CFG.PCT_PRO_SOLUTO)
+    pendencias.push(`Pró-soluto: ${pct(proSoluto)} (máx. 15%)`);
+
+  if (numParcelas > CFG.PRAZO_PARCELAMENTO)
+    pendencias.push(`Nº de parcelas (${numParcelas}) excede o prazo máximo de ${CFG.PRAZO_PARCELAMENTO}`);
+
+  if (renda > 0 && renda <= CFG.COHAPAR_LIMITE && cohapar === 0)
+    alertas.push('Renda compatível com COHAPAR — subsidio estadual não informado');
+
+  if (is2Q && !vagaSel)
+    pendencias.push('Unidade 2Q deve ser vendida obrigatoriamente com vaga');
+
+  if (is1Q && vagaSel)
+    alertas.push('Unidade 1Q sendo vendida com vaga');
+
+  if (saldoUnidadeRaw < 0 || saldoVagaRaw < 0)
+    pendencias.push('Redutores acima do saldo — verifique financiamento, entrada, subsídios e FGTS');
+
+  if (saldoTotal > 0 && numParcelas === 0)
+    pendencias.push('Existe saldo a parcelar sem parcelas definidas');
+
+  // Balões
+  const limiteBalao = renda * 0.8;
+  if (balao1 > 0 && balao1 > limiteBalao)
+    pendencias.push(`Balão 1 (${fmtC(balao1)}) excede 80% da renda (${fmtC(limiteBalao)})`);
+  if (balao2 > 0 && balao2 > limiteBalao)
+    pendencias.push(`Balão 2 (${fmtC(balao2)}) excede 80% da renda (${fmtC(limiteBalao)})`);
+
+  const APROVADO = pendencias.length === 0;
+
+  // ── RENDER ─────────────────────────────────────────────────────────────────
+  const statusPill = document.getElementById('globalStatus');
+  statusPill.className = 'status-pill ' + (APROVADO ? 'aprovado' : 'reprovado');
+  statusPill.textContent = APROVADO ? '✓ APROVADO' : `✕ REPROVADO (${pendencias.length} pendência${pendencias.length > 1 ? 's' : ''})`;
+
+  const cliente = gs('cliente') || '—';
+
+  let compColor = compRendaObra < 0.35 ? 'green' : compRendaObra < 0.45 ? 'yellow' : 'red';
+  let compColorBar = compRendaObra < 0.35 ? '#22c55e' : compRendaObra < 0.45 ? '#f59e0b' : '#ef4444';
+
+  document.getElementById('mainContent').innerHTML = `
+    <div style="margin-bottom:24px">
+      <div style="font-size:22px;font-weight:700;margin-bottom:4px">${unit.unidade} · ${unit.bloco}</div>
+      <div style="color:var(--muted);font-size:14px">${unit.tipologia}${vagaSel ? ' + ' + vagaSel : ''} · Cliente: ${cliente}</div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="results-grid">
+      <div class="stat-card">
+        <div class="stat-label">Valor Total</div>
+        <div class="stat-val blue">${fmtC(valorTotal)}</div>
+        <div class="stat-sub">Unid. ${fmtC(valorUnidade)}${vagaSel ? ' + Vaga ' + fmtC(valorVaga) : ''}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Saldo a Parcelar</div>
+        <div class="stat-val ${saldoTotal > 0 ? 'yellow' : 'green'}">${fmtC(saldoTotal)}</div>
+        <div class="stat-sub">${numParcelas} parcelas durante obra</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Parcela Mensal (Obra)</div>
+        <div class="stat-val ${parcelaMensalTotal < CFG.PARCELA_MIN && parcelaMensalTotal > 0 ? 'red' : 'blue'}">${fmtC(parcelaMensalTotal)}</div>
+        <div class="stat-sub">Unid. ${fmtC(parcelaMensalUnidade)} + Vaga ${fmtC(parcelaMensalVaga)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Parcela Pós-Obra</div>
+        <div class="stat-val">${fmtC(parcelaTotalPosObra)}</div>
+        <div class="stat-sub">${parcelasPosObra} parcelas · 1% a.m. + IPCA</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Comp. Renda Obra</div>
+        <div class="stat-val ${compColor}">${renda > 0 ? pct(compRendaObra) : '—'}</div>
+        ${renda > 0 ? `<div class="comp-bar-wrap"><div class="comp-bar-track"><div class="comp-bar-fill" style="width:${Math.min(100,compRendaObra*100)}%;background:${compColorBar}"></div></div></div>` : ''}
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avaliação Banco</div>
+        <div class="stat-val">${fmtC(avaliacao)}</div>
+        <div class="stat-sub">${avaliacao >= valorUnidade ? '✓ Dentro do limite' : '⚠ Abaixo do valor'}</div>
+      </div>
+    </div>
+
+    <!-- Status -->
+    ${pendencias.length > 0 || alertas.length > 0 ? `
+    <div class="table-wrap" style="margin-bottom:24px">
+      <div class="table-header">
+        <div class="dot" style="background:${APROVADO ? '#22c55e' : '#ef4444'}"></div>
+        ${APROVADO ? 'Simulação Aprovada' : `Pendências (${pendencias.length})`}
+      </div>
+      <div class="motivos-list">
+        ${pendencias.map(m => `<div class="motivo-item">${m}</div>`).join('')}
+        ${alertas.map(m => `<div class="motivo-item" style="background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.2);color:#fcd34d">⚠ ${m}</div>`).join('')}
+        ${APROVADO ? '<div class="motivo-item motivo-ok">Todos os critérios atendidos</div>' : ''}
+      </div>
+    </div>` : ''}
+
+    <!-- Quadro resumo -->
+    <div class="table-wrap" style="margin-bottom:24px">
+      <div class="table-header"><div class="dot"></div>Quadro Resumo</div>
+      <table>
+        <tr><th>Item</th><th>Valor</th><th>Obs.</th></tr>
+        <tr><td class="td-label">Valor do Imóvel</td><td>${fmtC(valorUnidade)}</td><td></td></tr>
+        ${vagaSel ? `<tr><td class="td-label">Valor da Vaga (${vagaSel})</td><td>${fmtC(valorVaga)}</td><td></td></tr>` : ''}
+        <tr><td class="td-label">Valor Total</td><td><b>${fmtC(valorTotal)}</b></td><td></td></tr>
+        <tr><td class="td-label" colspan="3" style="padding-top:8px;padding-bottom:2px;color:var(--accent);font-size:11px;font-family:'Inter',sans-serif;text-transform:uppercase;letter-spacing:.06em">Deduções</td></tr>
+        <tr><td class="td-label">Ato da Unidade</td><td>${fmtC(atoUnidade)}</td><td></td></tr>
+        ${vagaSel ? `<tr><td class="td-label">Ato da Vaga</td><td>${fmtC(atoVaga)}</td><td>${atoVaga > CFG.ATO_MAX_VAGA ? '⚠ Excede máx.' : ''}</td></tr>` : ''}
+        ${subsidioFederal > 0 ? `<tr><td class="td-label">Subsídio Federal</td><td>${fmtC(subsidioFederal)}</td><td></td></tr>` : ''}
+        ${subsidioEstadual > 0 ? `<tr><td class="td-label">Subsídio Estadual (COHAPAR)</td><td>${fmtC(subsidioEstadual)}</td><td></td></tr>` : ''}
+        ${fgts > 0 ? `<tr><td class="td-label">FGTS</td><td>${fmtC(fgts)}</td><td></td></tr>` : ''}
+        ${cohapar > 0 ? `<tr><td class="td-label">Venda COHAPAR</td><td>${fmtC(cohapar)}</td><td></td></tr>` : ''}
+        <tr><td class="td-label" colspan="3" style="padding-top:8px;padding-bottom:2px;color:var(--accent);font-size:11px;font-family:'Inter',sans-serif;text-transform:uppercase;letter-spacing:.06em">Parcelamento</td></tr>
+        <tr><td class="td-label">Saldo Unidade</td><td>${fmtC(saldoUnidade)}</td><td></td></tr>
+        ${vagaSel ? `<tr><td class="td-label">Saldo Vaga</td><td>${fmtC(saldoVaga)}</td><td></td></tr>` : ''}
+        <tr><td class="td-label">Saldo Total a Parcelar</td><td><b>${fmtC(saldoTotal)}</b></td><td></td></tr>
+        <tr><td class="td-label">Nº Parcelas Mensais</td><td>${numParcelas}</td><td>Máx. ${CFG.PRAZO_PARCELAMENTO}</td></tr>
+        <tr><td class="td-label">Parcela Total</td><td><b>${fmtC(parcelaMensalTotal)}</b></td><td>${parcelaMensalTotal < CFG.PARCELA_MIN && parcelaMensalTotal > 0 ? '⚠ Abaixo do mínimo' : ''}</td></tr>
+        ${balao1 > 0 ? `<tr><td class="td-label">Balão 1 (anual)</td><td>${fmtC(balao1)}</td><td>${renda > 0 ? pct(balao1/renda) + ' da renda' : ''}</td></tr>` : ''}
+        ${balao2 > 0 ? `<tr><td class="td-label">Balão 2 (anual)</td><td>${fmtC(balao2)}</td><td>${renda > 0 ? pct(balao2/renda) + ' da renda' : ''}</td></tr>` : ''}
+        <tr><td class="td-label" colspan="3" style="padding-top:8px;padding-bottom:2px;color:var(--accent);font-size:11px;font-family:'Inter',sans-serif;text-transform:uppercase;letter-spacing:.06em">Pós-Obra (Pride)</td></tr>
+        <tr><td class="td-label">Financiamento</td><td>${fmtC(finReal)}</td><td></td></tr>
+        <tr><td class="td-label">Saldo Vaga Pós-Obra</td><td>${fmtC(saldoVagaFinal)}</td><td></td></tr>
+        <tr><td class="td-label">Parcela Pós-Obra</td><td><b>${fmtC(parcelaTotalPosObra)}</b></td><td>${parcelasPosObra} parcelas</td></tr>
+        ${renda > 0 ? `<tr><td class="td-label">Comp. Renda Pós-Obra</td><td>${pct(compRendaPosObra)}</td><td>${compRendaPosObra > CFG.COMP_MAX_RENDA ? '⚠ Acima de 45%' : '✓ OK'}</td></tr>` : ''}
+      </table>
+    </div>
+
+    <!-- Indicadores de política -->
+    <div class="table-wrap">
+      <div class="table-header"><div class="dot" style="background:var(--accent2)"></div>Indicadores de Política</div>
+      <table>
+        <tr><th>Indicador</th><th>Calculado</th><th>Limite</th><th>Status</th></tr>
+        <tr>
+          <td class="td-label">% Parcelamento Construtora</td>
+          <td>${pct(pctParcelamento)}</td>
+          <td>25%</td>
+          <td style="color:${pctParcelamento <= CFG.PCT_PARCELAMENTO ? 'var(--green)' : 'var(--red)'}">${pctParcelamento <= CFG.PCT_PARCELAMENTO ? '✓ OK' : '✕ Excede'}</td>
+        </tr>
+        <tr>
+          <td class="td-label">Pró-soluto</td>
+          <td>${pct(proSoluto)}</td>
+          <td>15%</td>
+          <td style="color:${proSoluto <= CFG.PCT_PRO_SOLUTO ? 'var(--green)' : 'var(--red)'}">${proSoluto <= CFG.PCT_PRO_SOLUTO ? '✓ OK' : '✕ Excede'}</td>
+        </tr>
+        <tr>
+          <td class="td-label">% Entrada (total)</td>
+          <td>${pct(pctEntrada)}</td>
+          <td>—</td>
+          <td style="color:var(--muted)">Info</td>
+        </tr>
+        ${renda > 0 ? `
+        <tr>
+          <td class="td-label">Comp. Renda Obra</td>
+          <td>${pct(compRendaObra)}</td>
+          <td>45%</td>
+          <td style="color:${compRendaObra <= CFG.COMP_MAX_RENDA ? 'var(--green)' : 'var(--red)'}">${compRendaObra <= CFG.COMP_MAX_RENDA ? '✓ OK' : '✕ Excede'}</td>
+        </tr>
+        <tr>
+          <td class="td-label">Comp. Renda Pós-Obra</td>
+          <td>${pct(compRendaPosObra)}</td>
+          <td>45%</td>
+          <td style="color:${compRendaPosObra <= CFG.COMP_MAX_RENDA ? 'var(--green)' : 'var(--red)'}">${compRendaPosObra <= CFG.COMP_MAX_RENDA ? '✓ OK' : '✕ Excede'}</td>
+        </tr>
+        <tr>
+          <td class="td-label">COHAPAR (renda ≤ R$ ${fmt(CFG.COHAPAR_LIMITE)})</td>
+          <td>${renda <= CFG.COHAPAR_LIMITE ? 'Enquadra' : 'Não enquadra'}</td>
+          <td>R$ ${fmt(CFG.COHAPAR_LIMITE)}</td>
+          <td style="color:${renda <= CFG.COHAPAR_LIMITE ? 'var(--yellow)' : 'var(--muted)'}">${renda <= CFG.COHAPAR_LIMITE ? '⚠ Verificar subsídio' : '—'}</td>
+        </tr>
+        ` : ''}
+        <tr>
+          <td class="td-label">Documentação</td>
+          <td>${docGratuita ? 'Gratuita' : 'Cobrada'}</td>
+          <td>—</td>
+          <td style="color:${docGratuita ? 'var(--green)' : 'var(--yellow)'}">Info</td>
+        </tr>
+        <tr>
+          <td class="td-label">Fiador</td>
+          <td>${temFiador ? 'Sim' : 'Não'}</td>
+          <td>—</td>
+          <td style="color:var(--muted)">Info</td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="height:40px"></div>
+  `;
+}
+
+function clearMain() {
+  const statusPill = document.getElementById('globalStatus');
+  statusPill.className = 'status-pill pendente';
+  statusPill.textContent = 'Aguardando simulação';
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="empty">
+      <div class="empty-icon">🏢</div>
+      <h3>Selecione uma unidade</h3>
+      <p>Escolha o bloco e a unidade para iniciar a simulação.</p>
+    </div>
+  `;
+}
+
+function applyTheme(theme) {
+  const nextTheme = theme === 'dark' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = nextTheme;
+  document.body.dataset.theme = nextTheme;
+}
+
+window.addEventListener('message', (event) => {
+  if (event.data?.type === 'imovel-toolkit-theme') applyTheme(event.data.theme);
+});
+
+try {
+  applyTheme(window.parent?.document?.body?.dataset?.theme || localStorage.getItem('imovel-toolkit-theme') || 'light');
+} catch {
+  applyTheme(localStorage.getItem('imovel-toolkit-theme') || 'light');
+}
+
+init();
+</script>
+</body>
+</html>
